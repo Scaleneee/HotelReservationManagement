@@ -3,6 +3,7 @@
 #include "models.h"
 #include "file_io.h"
 #include "payment.h"
+#include "room.h"
 #include "ui.h"
 
 using namespace std;
@@ -14,13 +15,13 @@ vector<Room> rooms;
 vector<Reservation> reservations;
 vector<Payment> payments;
 
-void calculate() {
+/*void calculate() {
 	for (Payment& payment : payments)
 	{
 		payment.totalAmount = payment.roomFee + payment.depositAmount + payment.additionalCharge - payment.membershipDiscount;
 	}
 	save_payments_to_file();
-}
+}*/
 
 int main() {
 	// set theme
@@ -32,7 +33,8 @@ int main() {
 	//calculate();
 
 	// application entrance
-	payment_menu();
+	//payment_menu();
+	room_availability_menu();
 
 	return 0;
 }
