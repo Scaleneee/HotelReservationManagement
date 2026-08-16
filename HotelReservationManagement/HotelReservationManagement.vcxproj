@@ -131,6 +131,7 @@
     <ClInclude Include="models.h" />
     <ClInclude Include="payment.h" />
     <ClInclude Include="reservation.h" />
+    <ClInclude Include="room.h" />
     <ClInclude Include="ui.h" />
   </ItemGroup>
   <ItemGroup>
