@@ -83,6 +83,52 @@ Payment* get_payment_by_id(string paymentID) {
 	return nullptr;
 }
 
+double get_amount_paid(double totalAmount)
+{
+	double amountPaid;
+
+	while (true)
+	{
+		cout << setw(20) << left << "Enter Amount Paid[0 = Exact]" << ": ";
+		cin >> amountPaid;
+
+		// check non-numeric input
+		if (cin.fail())
+		{
+			cin.clear();
+			cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+			cout << "Invalid input. Please enter a valid amount." << endl;
+			continue;
+		}
+
+		// if 0 means exact
+		if (amountPaid == 0)
+		{
+			return totalAmount;
+		}
+
+		// check negative amount
+		if (amountPaid < 0)
+		{
+			cout << "Amount paid must be greater than RM0.00." << endl;
+			continue;
+		}
+
+		// check insufficient payment
+		if (amountPaid < totalAmount)
+		{
+			cout << "Insufficient amount. Total amount is RM"
+				<< fixed << setprecision(2)
+				<< totalAmount << "." << endl;
+
+			continue;
+		}
+
+		return amountPaid;
+	}
+}
+
 
 // --------------- UI MENU FUNCTIONS ---------------
 void print_invoice(Payment payment) {
@@ -154,6 +200,74 @@ void print_invoice(Payment payment) {
 	print_divider();
 }
 
+void confirm_payment_screen(Payment& payment, string payment_method) {
+	// clear
+	clear_screen();
+
+	// display header
+	print_header("Process Payment");
+	empty_line();
+
+	// display payment method
+	print_table_row(format("{:<20}: {}", "|Payment Method", payment_method));
+
+	// display total amount
+	print_table_row(format("{:<20}: RM{:.2f}", "|Total Amount", payment.totalAmount));
+
+	double amount_paid;
+	double changes;
+
+	if (payment_method == "Cash")
+	{
+		// promt user enter the amount paid
+		// if the payment method = cash only ask to enter the amount paid
+		// all validation checking inside this function
+		amount_paid = get_amount_paid(payment.totalAmount);
+		// clear line
+		cout << "\033[1A"; // move cursor up 1 line
+		cout << "\r\033[2K"; // clear entire line
+	}
+	else
+	{
+		amount_paid = payment.totalAmount;
+	}
+
+	print_table_row(format("{:<20}: RM{:.2f}", "|Amount Paid", amount_paid));
+
+	// calculate and display changes
+	changes = payment.totalAmount - amount_paid;
+	
+	print_table_row(format("{:<20}: RM{:.2f}", "|Changes", changes));
+
+	print_divider_with_space(false);
+
+	// confirm payment
+	cout << "Confirm Payment? " << endl;
+	cout << endl;
+
+	int choice;
+
+	cout << "  [1] Confirm" << endl;
+	cout << "  [0] Cancel" << endl;
+	cout << endl;
+
+	choice = get_menu_choice(1);
+	
+	if (choice == 1)
+	{
+		// confirm payment
+		// process...
+		payment.amountPaid = amount_paid;
+		payment.change = changes;
+		payment.paymentStatus = "Paid";
+	}
+	else
+	{
+		// cancelled
+		return;
+	}
+}
+
 void process_payment_screen(Payment &payment) {
 	// clear
 	clear_screen();
@@ -170,8 +284,6 @@ void process_payment_screen(Payment &payment) {
 	// ask user input
 	// variable use to store the information
 	string payment_method;
-	double amount_paid;
-	double changes;
 		
 	// payment method
 	cout << "Select Payment Method: " << endl;
@@ -192,12 +304,6 @@ void process_payment_screen(Payment &payment) {
 	case 1:
 		// cash
 		payment_method = "Cash";
-
-		// if the payment method = cash only ask to enter the amount paid
-		cout << "Enter the amount paid: ";
-
-
-
 		break;
 	case 2:
 		// credit card
@@ -215,6 +321,7 @@ void process_payment_screen(Payment &payment) {
 		// 0, back
 		return;
 	}
+	confirm_payment_screen(payment, payment_method);
 }
 
 void payment_detail_screen(Payment payment) {
