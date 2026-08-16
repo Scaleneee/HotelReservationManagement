@@ -1,0 +1,8 @@
+101|Standard|One queen bed with city view|2|180.00|Reserved
+102|Standard|Two single beds|2|180.00|Available
+201|Deluxe|King bed with larger room|2|280.00|Reserved
+202|Deluxe|King bed with balcony|2|300.00|Available
+301|Family|Two queen beds for family stay|4|420.00|Occupied
+302|Family|Two queen beds with city view|4|450.00|Available
+401|Suite|Premium suite with living area|2|650.00|Housekeeping
+402|Suite|Premium suite with sea view|2|700.00|Maintenance
