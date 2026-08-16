@@ -21,6 +21,12 @@ void print_divider() {
 	cout << endl;
 }
 
+void print_divider_with_space() {
+	cout << endl;
+	print_divider();
+	cout << endl;
+}
+
 void print_line() {
 	for (int i = 0; i < HEADER_WIDTH; i++)
 	{

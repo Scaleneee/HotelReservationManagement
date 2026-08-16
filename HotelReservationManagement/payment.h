@@ -85,15 +85,52 @@ void payment_detail_screen(Payment payment) {
 	cout << endl;
 
 	// print reservation detials
+	// info part
 	// reservation id
-	cout << setw(23) << left << "Reservation ID" << ":" << payment.reservationID;
+	cout << setw(23) << left << "Reservation ID" << ": " << payment.reservationID << endl;
 
 	// customer name
-	cout << setw(23) << left << "Customer" << ":" << customer.name;
+	cout << setw(23) << left << "Customer" << ": " << customer.name << endl;
 
 	// room number
-	cout << setw(23) << left << "Room Number" << ":" << reservation.roomNumber;
+	cout << setw(23) << left << "Room Number" << ": " << reservation.roomNumber << endl;
 
+	// check in and check out
+	cout << setw(23) << left << "Check-In Date" << ": " << reservation.checkInDate << endl;
+	cout << setw(23) << left << "Check-Out Date" << ": " << reservation.checkOutDate << endl;
+
+	// num of night
+	cout << setw(23) << left << "Number of Night" << ": " << reservation.numberOfNights << endl;
+
+	print_divider_with_space();
+
+	// money part
+	// room fee
+	cout << setw(23) << left << "Room Fee" << ": RM" << payment.roomFee << endl;
+
+	// membership discount
+	if (payment.membershipDiscount != 0)
+	{
+		// if the customer is membership only print this
+		cout << setw(23) << left << "Membership Discount" << ": RM" << payment.roomFee << endl;
+	}
+
+	// deposit
+	cout << setw(23) << left << "Security Deposit" << ": RM" << payment.depositAmount << endl;
+
+	// additional charge
+	cout << setw(23) << left << "Additional Charge" << ": RM" << payment.additionalCharge << endl;
+
+	print_divider_with_space();
+	
+	// print choices
+	cout << "  [1] Proceed Payment" << endl;
+	cout << "  [0] Back" << endl;
+
+	cout << endl;
+
+	// ask user input
+	int choice = get_menu_choice(1);
 }
 
 void unpaid_payments_screen() {
@@ -154,11 +191,14 @@ void unpaid_payments_screen() {
 		cout << "Enter the Reservation ID to proceed payment[0 to back]: ";
 		cin >> reservationID;
 
+		// process it to all upper case
 		if (reservationID == "0")
 		{
 			 // back
 			return;
 		}
+
+		transform(reservationID.begin(), reservationID.end(), reservationID.begin(), ::toupper);
 
 		// reservation id validation checking
 		// check format

@@ -18,3 +18,17 @@ Customer* get_customer_by_id(string customerID) {
 	}
 	return nullptr;
 }
+
+/*
+	pass in the customer id and check whether the customer is membership or not
+*/
+bool is_membership(string customerID) {
+	
+	for (Membership membership : memberships)
+	{
+		if (membership.customerID == customerID) {
+			return true;
+		}
+	}
+	return false;
+}
