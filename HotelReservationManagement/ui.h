@@ -23,6 +23,11 @@ void set_theme(string theme) {
 	}
 }
 
+void print_table_row(string text)
+{
+	cout << setw(79) << left << text << "|" << endl;
+}
+
 void empty_line() {
 	cout << "|" << setw(79) << right << "|" << endl;
 }
