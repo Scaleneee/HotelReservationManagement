@@ -16,22 +16,22 @@ using namespace std;
 /*
 	return deposit
 */
-double calculateDeposit(double roomFee) {
+double calculate_deposit(double roomFee) {
 	return roomFee * DEPOSIT_RATE;
 }
 
 /*
 	return the total amount of the payment
 */
-double calculateTotalAmount(
+double calculate_total_amount(
 	double roomFee,
 	double discount,
 	double additionalCharge
 ) {
-	return (roomFee + additionalCharge + calculateDeposit(roomFee)) - discount;
+	return (roomFee + additionalCharge + calculate_deposit(roomFee)) - discount;
 }
 
-void createUnpaidPayment(Reservation reservation) {
+void create_unpaid_payment(Reservation reservation) {
 	// declare a new payment obj 
 	Payment payment;
 
@@ -43,7 +43,7 @@ void createUnpaidPayment(Reservation reservation) {
 	// calculate room fee
 	payment.roomFee = reservation.roomPrice * reservation.numberOfNights;
 	// calculate total amount
-	payment.totalAmount = calculateTotalAmount(payment.roomFee, 0.0, 0.0);
+	payment.totalAmount = calculate_total_amount(payment.roomFee, 0.0, 0.0);
 
 	// store into list
 	payments.push_back(payment);
@@ -70,8 +70,27 @@ Payment* get_payment_by_reservation_id(string reservationID) {
 	return nullptr;
 }
 
+Payment* get_payment_by_id(string paymentID) {
+	for (Payment& payment : payments)
+	{
+		if (payment.paymentID == paymentID)
+		{
+			return &payment;
+		}
+	}
+	return nullptr;
+}
+
 
 // --------------- UI MENU FUNCTIONS ---------------
+void process_payment_screen(Payment &payment) {
+	// clear
+	clear_screen();
+
+	// ask user input
+
+}
+
 void payment_detail_screen(Payment payment) {
 	// clear
 	clear_screen();
@@ -102,26 +121,38 @@ void payment_detail_screen(Payment payment) {
 	// num of night
 	cout << setw(23) << left << "Number of Night" << ": " << reservation.numberOfNights << endl;
 
-	print_divider_with_space();
+	print_divider_with_space(false);
 
 	// money part
 	// room fee
-	cout << setw(23) << left << "Room Fee" << ": RM" << payment.roomFee << endl;
+	cout << setw(23) << left << "Room Fee" << ": RM" << setprecision(2) << fixed
+		<< setw(9) << right << payment.roomFee << endl;
 
 	// membership discount
 	if (payment.membershipDiscount != 0)
 	{
 		// if the customer is membership only print this
-		cout << setw(23) << left << "Membership Discount" << ": RM" << payment.roomFee << endl;
+		cout << setw(23) << left << "Membership Discount" << ": RM" << setprecision(2) << fixed
+			<< setw(9) << right << payment.membershipDiscount  << " (-) " << endl;
 	}
 
 	// deposit
-	cout << setw(23) << left << "Security Deposit" << ": RM" << payment.depositAmount << endl;
+	cout << setw(23) << left << "Security Deposit" << ": RM" << setprecision(2) << fixed
+		<< setw(9) << right << payment.depositAmount << endl;
 
 	// additional charge
-	cout << setw(23) << left << "Additional Charge" << ": RM" << payment.additionalCharge << endl;
+	cout << setw(23) << left << "Additional Charge" << ": RM" << setprecision(2) << fixed
+		<< setw(9) << right << payment.additionalCharge << endl;
 
-	print_divider_with_space();
+	cout << endl;
+	print_divider();
+
+	// total amount
+	cout << setw(23) << left << "Total Amount" << ": RM" << setprecision(2) << fixed
+		<< setw(9) << right << payment.totalAmount << endl;
+
+	print_divider();
+	cout << endl;
 	
 	// print choices
 	cout << "  [1] Proceed Payment" << endl;
@@ -131,6 +162,12 @@ void payment_detail_screen(Payment payment) {
 
 	// ask user input
 	int choice = get_menu_choice(1);
+
+	if (choice == 1)
+	{
+		// process payment
+		process_payment_screen(*get_payment_by_id(payment.paymentID));
+	}
 }
 
 void unpaid_payments_screen() {
@@ -251,18 +288,16 @@ void payment_menu() {
 		print_header("Payment and Reporting");
 
 		// payment menu
-		cout << endl;
-		cout << "  [1] View Unpaid Payments" << endl;
-		cout << "  [2] Search Payment" << endl;
-		cout << "  [3] Process Refund" << endl;
-		cout << "  [4] Settle Deposit" << endl;
-		cout << "  [5] Generate Report" << endl;
+		empty_line();
+		cout << "|  [1] View Unpaid Payments" << setw(80-27) << right << "|" << endl;
+		cout << "|  [2] Search Payment" << setw(80 - 21) << right << "|" << endl;
+		cout << "|  [3] Process Refund" << setw(80 - 21) << right << "|" << endl;
+		cout << "|  [4] Settle Deposit" << setw(80 - 21) << right << "|" << endl;
+		cout << "|  [5] Generate Report" << setw(80 - 22) << right << "|" << endl;
 
-		cout << endl;
-		cout << "  [0] Back" << endl;
-		cout << endl;
-		print_divider();
-		cout << endl;
+		empty_line();
+		cout << "|  [0] Back" << setw(80 - 11) << right << "|" << endl;
+		print_divider_with_space(false);
 
 		// ask user to input a choice
 		choice = get_menu_choice(5);

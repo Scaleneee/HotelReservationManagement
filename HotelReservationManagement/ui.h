@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <cstdlib>
 #include <string>
+#include <algorithm>
 
 using namespace std;
 
@@ -13,6 +14,19 @@ using namespace std;
 const int HEADER_WIDTH = 80;
 const int CONTENT_WIDTH = HEADER_WIDTH - 2; // - two '|'
 
+// set light or dark theme
+void set_theme(string theme) {
+	transform(theme.begin(), theme.end(), theme.begin(), ::toupper);
+	if (theme == "LIGHT")
+	{
+		system("color F0");
+	}
+}
+
+void empty_line() {
+	cout << "|" << setw(79) << right << "|" << endl;
+}
+
 void print_divider() {
 	for (int i = 0; i < HEADER_WIDTH; i++)
 	{
@@ -21,10 +35,17 @@ void print_divider() {
 	cout << endl;
 }
 
-void print_divider_with_space() {
-	cout << endl;
+void print_divider_with_space(bool bottom_line) {
+	empty_line();
 	print_divider();
-	cout << endl;
+	if (bottom_line)
+	{
+		empty_line();
+	}
+	else
+	{
+		cout << endl;
+	}
 }
 
 void print_line() {
@@ -99,3 +120,4 @@ int get_menu_choice(int max) {
 void clear_screen() {
 	system("cls");
 }
+
