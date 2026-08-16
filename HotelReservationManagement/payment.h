@@ -168,6 +168,11 @@ void process_payment_screen(Payment &payment) {
 	cout << endl;
 
 	// ask user input
+	// variable use to store the information
+	string payment_method;
+	double amount_paid;
+	double changes;
+		
 	// payment method
 	cout << "Select Payment Method: " << endl;
 	cout << endl;
@@ -183,6 +188,33 @@ void process_payment_screen(Payment &payment) {
 
 	int choice = get_menu_choice(4);
 
+	switch (choice) {
+	case 1:
+		// cash
+		payment_method = "Cash";
+
+		// if the payment method = cash only ask to enter the amount paid
+		cout << "Enter the amount paid: ";
+
+
+
+		break;
+	case 2:
+		// credit card
+		payment_method = "Credit Card";
+		break;
+	case 3:
+		// debit card
+		payment_method = "Debit Card";
+		break;
+	case 4:
+		// eWallet
+		payment_method = "E-Wallet";
+		break;
+	default:
+		// 0, back
+		return;
+	}
 }
 
 void payment_detail_screen(Payment payment) {
