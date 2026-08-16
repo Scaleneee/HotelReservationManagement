@@ -1,9 +1,11 @@
 #pragma once
 #include <iostream>
+#include <iomanip>
 #include <string>
 #include <vector>
 #include <algorithm>
 #include <regex>
+#include <format>
 #include "models.h"
 #include "reservation.h"
 #include "file_io.h"
@@ -83,75 +85,116 @@ Payment* get_payment_by_id(string paymentID) {
 
 
 // --------------- UI MENU FUNCTIONS ---------------
+void print_invoice(Payment payment) {
+	Reservation reservation = *get_reservation_by_id(payment.reservationID);
+	Customer customer = *get_customer_by_id(reservation.customerID);
+
+	// print reservation detials
+	// info part
+	// reservation id
+	// reservation id
+	print_table_row("|Reservation ID         : " + payment.reservationID);
+
+	// customer name
+	print_table_row("|Customer               : " + customer.name);
+
+	// room number
+	print_table_row("|Room Number            : " + to_string(reservation.roomNumber));
+
+	// check in and check out
+	print_table_row("|Check-In Date          : " + reservation.checkInDate);
+	print_table_row("|Check-Out Date         : " + reservation.checkOutDate);
+
+	// number of nights
+	print_table_row("|Number of Night        : " + to_string(reservation.numberOfNights));
+
+	print_divider_with_space(true);
+
+	// money part
+	// room fee
+	print_table_row(
+		format("{:<23}: RM{:>9.2f}",
+			"|Room Fee",
+			payment.roomFee)
+	);
+
+	// membership discount
+	if (payment.membershipDiscount != 0)
+	{
+		print_table_row(
+			format("{:<23}: RM{:>9.2f} (-)",
+				"|Membership Discount",
+				payment.membershipDiscount)
+		);
+	}
+
+	// deposit
+	print_table_row(
+		format("{:<23}: RM{:>9.2f}",
+			"|Security Deposit",
+			payment.depositAmount)
+	);
+
+	// additional charge
+	print_table_row(
+		format("{:<23}: RM{:>9.2f}",
+			"|Additional Charge",
+			payment.additionalCharge)
+	);
+
+	empty_line();
+	print_divider();
+
+	// total
+	print_table_row(
+		format("{:<23}: RM{:>9.2f}",
+			"|Total Amount",
+			payment.totalAmount)
+	);
+	print_divider();
+}
+
 void process_payment_screen(Payment &payment) {
 	// clear
 	clear_screen();
 
+	// print header
+	print_header("Process Payment");
+	empty_line();
+
+	// print the invoice
+	print_invoice(payment);
+
+	cout << endl;
+
 	// ask user input
+	// payment method
+	cout << "Select Payment Method: " << endl;
+	cout << endl;
+
+	cout << "  [1] Cash" << endl;
+	cout << "  [2] Credit Card" << endl;
+	cout << "  [3] Debit Card" << endl;
+	cout << "  [4] E-Wallet" << endl;
+
+	cout << endl;
+	cout << "  [0] Back" << endl;
+	cout << endl;
+
+	int choice = get_menu_choice(4);
 
 }
 
 void payment_detail_screen(Payment payment) {
 	// clear
 	clear_screen();
-
-	Reservation reservation = *get_reservation_by_id(payment.reservationID);
-	Customer customer = *get_customer_by_id(reservation.customerID);
-
+	
 	// print header
 	print_header("Payment Detail");
 
-	cout << endl;
+	empty_line();
+	print_invoice(payment);
 
-	// print reservation detials
-	// info part
-	// reservation id
-	cout << setw(23) << left << "Reservation ID" << ": " << payment.reservationID << endl;
-
-	// customer name
-	cout << setw(23) << left << "Customer" << ": " << customer.name << endl;
-
-	// room number
-	cout << setw(23) << left << "Room Number" << ": " << reservation.roomNumber << endl;
-
-	// check in and check out
-	cout << setw(23) << left << "Check-In Date" << ": " << reservation.checkInDate << endl;
-	cout << setw(23) << left << "Check-Out Date" << ": " << reservation.checkOutDate << endl;
-
-	// num of night
-	cout << setw(23) << left << "Number of Night" << ": " << reservation.numberOfNights << endl;
-
-	print_divider_with_space(false);
-
-	// money part
-	// room fee
-	cout << setw(23) << left << "Room Fee" << ": RM" << setprecision(2) << fixed
-		<< setw(9) << right << payment.roomFee << endl;
-
-	// membership discount
-	if (payment.membershipDiscount != 0)
-	{
-		// if the customer is membership only print this
-		cout << setw(23) << left << "Membership Discount" << ": RM" << setprecision(2) << fixed
-			<< setw(9) << right << payment.membershipDiscount  << " (-) " << endl;
-	}
-
-	// deposit
-	cout << setw(23) << left << "Security Deposit" << ": RM" << setprecision(2) << fixed
-		<< setw(9) << right << payment.depositAmount << endl;
-
-	// additional charge
-	cout << setw(23) << left << "Additional Charge" << ": RM" << setprecision(2) << fixed
-		<< setw(9) << right << payment.additionalCharge << endl;
-
-	cout << endl;
-	print_divider();
-
-	// total amount
-	cout << setw(23) << left << "Total Amount" << ": RM" << setprecision(2) << fixed
-		<< setw(9) << right << payment.totalAmount << endl;
-
-	print_divider();
 	cout << endl;
 	
 	// print choices
