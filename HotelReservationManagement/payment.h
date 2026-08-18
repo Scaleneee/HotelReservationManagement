@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <regex>
 #include <format>
+#include <ctime>
+#include <sstream>
 #include "models.h"
 #include "reservation.h"
 #include "file_io.h"
@@ -129,6 +131,24 @@ double get_amount_paid(double totalAmount)
 	}
 }
 
+/*
+	return today date in string format
+*/
+string get_today_date() {
+	time_t now = time(0);
+
+	tm localTime;
+	localtime_s(&localTime, &now);
+
+	stringstream ss;
+
+	ss << setfill('0')
+		<< setw(2) << localTime.tm_mday << "/"
+		<< setw(2) << localTime.tm_mon + 1 << "/"
+		<< localTime.tm_year + 1900;
+
+	return ss.str();
+}
 
 // --------------- UI MENU FUNCTIONS ---------------
 void print_invoice(Payment payment) {
@@ -200,6 +220,35 @@ void print_invoice(Payment payment) {
 	print_divider();
 }
 
+void print_receipt(Payment payment) {
+	// header
+	print_header("Receipt");
+
+	// print same info as invoice
+	print_invoice(payment);
+
+	cout << endl;
+
+	print_table_row(format("|{:<23}: {}", "Payment Method", payment.paymentMethod));
+	print_table_row(format("|{:<23}: {}", "Amount Paid", payment.amountPaid));
+	print_table_row(format("|{:<23}: {}", "Change", payment.change));
+	print_table_row(format("|{:<23}: {}", "Payment Date", payment.paymentDate));
+	print_table_row(format("|{:<23}: {}", "Payment Status", payment.paymentStatus));
+
+	cout << endl;
+
+	// footer
+	print_header("Thanks For Your Payment");
+}
+
+void payment_successful(Payment payment) {
+	// print receipt
+	print_receipt(payment);
+
+	int x;
+	cin >> x;
+}
+
 void confirm_payment_screen(Payment& payment, string payment_method) {
 	// clear
 	clear_screen();
@@ -212,7 +261,7 @@ void confirm_payment_screen(Payment& payment, string payment_method) {
 	print_table_row(format("{:<20}: {}", "|Payment Method", payment_method));
 
 	// display total amount
-	print_table_row(format("{:<20}: RM{:.2f}", "|Total Amount", payment.totalAmount));
+	print_table_row(format("{:<20}: RM{:>9.2f}", "|Total Amount", payment.totalAmount));
 
 	double amount_paid;
 	double changes;
@@ -232,12 +281,12 @@ void confirm_payment_screen(Payment& payment, string payment_method) {
 		amount_paid = payment.totalAmount;
 	}
 
-	print_table_row(format("{:<20}: RM{:.2f}", "|Amount Paid", amount_paid));
+	print_table_row(format("{:<20}: RM{:>9.2f}", "|Amount Paid", amount_paid));
 
 	// calculate and display changes
-	changes = payment.totalAmount - amount_paid;
+	changes = amount_paid - payment.totalAmount;
 	
-	print_table_row(format("{:<20}: RM{:.2f}", "|Changes", changes));
+	print_table_row(format("{:<20}: RM{:>9.2f}", "|Changes", changes));
 
 	print_divider_with_space(false);
 
@@ -256,10 +305,23 @@ void confirm_payment_screen(Payment& payment, string payment_method) {
 	if (choice == 1)
 	{
 		// confirm payment
-		// process...
+		
+		// set the payment method
+		payment.paymentMethod = payment_method;
+		// set the amount paid value
 		payment.amountPaid = amount_paid;
+		// set the changes value
 		payment.change = changes;
+		// change the payment status to "Paid"
 		payment.paymentStatus = "Paid";
+		// set the payment date to today date
+		payment.paymentDate = get_today_date();
+
+		// update this all to file
+		save_payments_to_file();
+
+		// payment successful
+		payment_successful(payment);
 	}
 	else
 	{
