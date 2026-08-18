@@ -62,6 +62,11 @@ bool check_reservation_id_format(string reservationID) {
 	return regex_match(reservationID, pattern);
 }
 
+bool check_payment_id_format(string reservationID) {
+	regex pattern(R"(^PAY[0-9]{3}$)");
+	return regex_match(reservationID, pattern);
+}
+
 /*
 	pass in the reservationID and get the payment obj belongs to
 */
@@ -149,6 +154,34 @@ string get_today_date() {
 		<< localTime.tm_year + 1900;
 
 	return ss.str();
+}
+
+vector<Payment*> get_payments_by_customer_name(string customerName) {
+	vector<Payment*> matchedPayments;
+
+	for (Customer& customer : customers) {
+		// find customer with matching name
+		if (customer.name == customerName) {
+
+			// find reservations belonging to this customer
+			for (Reservation& reservation : reservations) {
+				if (reservation.customerID == customer.customerID) {
+
+					// find payment belonging to the reservation
+					Payment* payment =
+						get_payment_by_reservation_id(
+							reservation.reservationID
+						);
+
+					if (payment != nullptr) {
+						matchedPayments.push_back(payment);
+					}
+				}
+			}
+		}
+	}
+
+	return matchedPayments;
 }
 
 // --------------- UI MENU FUNCTIONS ---------------
@@ -392,10 +425,10 @@ void process_payment_screen(Payment &payment) {
 	confirm_payment_screen(payment, payment_method);
 }
 
-void payment_detail_screen(Payment payment) {
+void print_payment_detail(Payment payment) {
 	// clear
 	clear_screen();
-	
+
 	// print header
 	print_header("Payment Detail");
 
@@ -403,7 +436,9 @@ void payment_detail_screen(Payment payment) {
 	print_invoice(payment);
 
 	cout << endl;
-	
+}
+
+void payment_detail_screen(Payment payment) {
 	// print choices
 	cout << "  [1] Proceed Payment" << endl;
 	cout << "  [0] Back" << endl;
@@ -420,6 +455,68 @@ void payment_detail_screen(Payment payment) {
 	}
 }
 
+void print_payment_table(const vector<Payment*>& payments)
+{
+	// table header
+	print_table_row(
+		format("|{:<18}{:<16}{:<8}{:<12}{:<8}{:<10}{:<6}",
+			"Reservation ID",
+			"Customer",
+			"Room",
+			"Check-In",
+			"Nights",
+			"Amount",
+			"Status")
+	);
+
+	print_divider();
+
+	// payment rows
+	for (Payment* payment : payments)
+	{
+		if (payment == nullptr)
+		{
+			continue;
+		}
+
+		// get reservation
+		Reservation* reservation =
+			get_reservation_by_id(payment->reservationID);
+
+		if (reservation == nullptr)
+		{
+			continue;
+		}
+
+		// get customer
+		Customer* customer =
+			get_customer_by_id(reservation->customerID);
+
+		string customerName = "-";
+
+		if (customer != nullptr)
+		{
+			customerName = customer->name;
+		}
+
+		// print row
+		print_table_row(
+			format("|{:<18}{:<16}{:<8}{:<12}{:<8}{:<10.2f}{:<6}",
+				reservation->reservationID,
+				customerName,
+				reservation->roomNumber,
+				reservation->checkInDate,
+				reservation->numberOfNights,
+				payment->totalAmount,
+				payment->paymentStatus)
+		);
+	}
+
+	print_divider();
+	cout << endl;
+}
+
+
 void unpaid_payments_screen() {
 	// clear screen
 	clear_screen();
@@ -427,47 +524,19 @@ void unpaid_payments_screen() {
 	// print header
 	print_header("Unpaid Payments");
 
-	cout << endl;
+	vector<Payment*> unpaid_payments;
 
-	// show the information in table form
-	// table header row
-	cout << setw(18) << left << "Reservation ID"
-		<< setw(12) << left << "Customer"
-		<< setw(8) << left << "Room"
-		<< setw(12) << left <<"Check-In"
-		<< setw(10) << "Nights"
-		<< setw(11) << left << "Amount" 
-		<< setw(6) << left << "Status" << endl;
-
-	print_divider();
-
-	vector<Payment> unpaid_payments;
-
-	Reservation reservation;
-	// show the unpaid payment information
-	for (Payment& payment : payments)
-	{
-		// only show unpaid payment
+	// only show unpaid payment
+	for (Payment& payment : payments) {
 		if (payment.paymentStatus == "Unpaid")
 		{
 			// add the payment obj into the unpaid payment list
 			// for future operation
-			unpaid_payments.push_back(payment);
-			
-			reservation = *get_reservation_by_id(payment.reservationID);
-
-			cout << setw(18) << left << reservation.reservationID
-				<< setw(12) << left << reservation.customerID // change it to name ltr
-				<< setw(8) << left << reservation.roomNumber
-				<< setw(12) << left << reservation.checkInDate
-				<< setw(10) << reservation.numberOfNights
-				<< setw(11) << left << payment.totalAmount
-				<< setw(6) << left << payment.paymentStatus << endl;
+			unpaid_payments.push_back(&payment);
 		}
 	}
-
-	print_divider();
-	cout << endl;
+	
+	print_payment_table(unpaid_payments);
 
 	bool valid = false;
 
@@ -504,10 +573,10 @@ void unpaid_payments_screen() {
 		valid = false;
 
 		// check whether exists or not
-		for (Payment payment : unpaid_payments)
+		for (Payment* payment : unpaid_payments)
 		{
 			// if found
-			if (payment.reservationID == reservationID)
+			if (payment->reservationID == reservationID)
 			{
 				valid = true;
 				// call the function to show the payment detail
@@ -520,6 +589,254 @@ void unpaid_payments_screen() {
 		if (!valid)
 		{
 			cout << "Reservation not found..." << endl;
+		}
+
+	} while (!valid);
+
+}
+
+void payment_search_result_screen(Payment payment) {
+	if (payment.paymentStatus == "Unpaid")
+	{
+		print_payment_detail(payment);
+
+		cout << "Press any key to continue...";
+		_getch();
+	}
+	else
+	{
+		payment_successful(payment);
+	}
+}
+
+void payment_search_result_screen(const vector<Payment*>& payments) {
+	clear_screen();
+
+	print_header("Search Results");
+	empty_line();
+
+	// display table
+	for (Payment* payment : payments)
+	{
+		if (payment == nullptr)
+		{
+			continue;
+		}
+
+		cout << setw(15) << left << payment->paymentID
+			<< setw(18) << left << payment->reservationID
+			<< setw(12) << fixed << setprecision(2) << payment->totalAmount
+			<< setw(12) << left << payment->paymentStatus
+			<< endl;
+	}
+
+	cout << endl;
+
+	string paymentID;
+
+	while (true)
+	{
+		cout << "Enter Payment ID to view details [0 to back]: ";
+		cin >> paymentID;
+
+		if (paymentID == "0")
+		{
+			return;
+		}
+
+		transform(
+			paymentID.begin(),
+			paymentID.end(),
+			paymentID.begin(),
+			::toupper
+		);
+
+		// check format
+		if (!check_payment_id_format(paymentID))
+		{
+			cout << "Payment ID format incorrect..." << endl;
+			continue;
+		}
+
+		bool found = false;
+
+		for (Payment* payment : payments)
+		{
+			if (payment == nullptr)
+			{
+				continue;
+			}
+
+			if (payment->paymentID == paymentID)
+			{
+				found = true;
+
+				// dereference pointer and pass Payment object
+				payment_search_result_screen(*payment);
+
+				break;
+			}
+		}
+
+		if (!found)
+		{
+			cout << "Payment not found in search results..." << endl;
+			continue;
+		}
+
+		return;
+	}
+}
+
+void search_payment_screen() {
+	// clear
+	clear_screen();
+
+	// header
+	print_header("Search Payment");
+
+	empty_line();
+
+	// menu selection
+	print_table_row("|  [1] Search by Payment ID");
+	print_table_row("|  [2] Search by Reservation ID");
+	print_table_row("|  [3] Search by Customer Name");
+	empty_line();
+	print_table_row("|  [0] Back");
+	empty_line();
+	print_divider_with_space(false);
+
+	cout << endl;
+
+	// get choice
+	int choice;
+	choice = get_menu_choice(3);
+
+	// back
+	if (choice == 0) {
+		return;
+	}
+
+	// clear
+	clear_screen();
+
+	// header 
+	print_header("Search Payment");
+
+	string input;
+
+	bool valid = false;
+	do {
+		cout << endl;
+
+		// prompt user enter payment id, reservation id or customer name and store inside input
+		cout << "Enter "
+			<< ((choice == 1) ? "Payment ID"
+				: (choice == 2 ? "Reservation ID"
+					: "Customer Name"))
+			<< " [0 to back]: ";
+
+		getline(cin, input);
+
+		// back
+		if (input == "0") {
+			return;
+		}
+
+		// SEARCH BY PAYMENT ID
+		if (choice == 1) {
+
+			// convert to uppercase
+			transform(
+				input.begin(),
+				input.end(),
+				input.begin(),
+				::toupper
+			);
+
+			// check format
+			if (!check_payment_id_format(input)) {
+				cout << "Payment ID format incorrect..." << endl;
+				continue;
+			}
+
+			// check exists
+			Payment* payment = get_payment_by_id(input);
+
+			if (payment == nullptr) {
+				cout << "Payment not found..." << endl;
+				continue;
+			}
+
+			valid = true;
+
+			// show result
+			payment_search_result_screen(*payment);
+		}
+
+		// SEARCH BY RESERVATION ID
+		else if (choice == 2) {
+
+			// convert to uppercase
+			transform(
+				input.begin(),
+				input.end(),
+				input.begin(),
+				::toupper
+			);
+
+			// check format
+			if (!check_reservation_id_format(input)) {
+				cout << "Reservation ID format incorrect..." << endl;
+				continue;
+			}
+
+			// check payment exists for reservation
+			Payment* payment =
+				get_payment_by_reservation_id(input);
+
+			if (payment == nullptr) {
+				cout << "Payment not found..." << endl;
+				continue;
+			}
+
+			valid = true;
+
+			// show result
+			payment_search_result_screen(*payment);
+		}
+
+		// SEARCH BY CUSTOMER NAME
+		else if (choice == 3) {
+
+			// empty input
+			if (input.empty()) {
+				cout << "Customer name cannot be empty..." << endl;
+				continue;
+			}
+
+			// check name format
+			regex namePattern(R"(^[A-Za-z ]+$)");
+
+			if (!regex_match(input, namePattern)) {
+				cout << "Customer name can only contain letters and spaces..."
+					<< endl;
+				continue;
+			}
+
+			// search payments belonging to this customer
+			vector<Payment*> matchedPayments =
+				get_payments_by_customer_name(input);
+
+			if (matchedPayments.empty()) {
+				cout << "No payment found for this customer..." << endl;
+				continue;
+			}
+
+			valid = true;
+
+			// show multiple results
+			payment_search_result_screen(matchedPayments);
 		}
 
 	} while (!valid);
@@ -559,6 +876,7 @@ void payment_menu() {
 			break;
 		case 2:
 			// search payment
+			search_payment_screen();
 			break;
 		case 3:
 			// process refund
