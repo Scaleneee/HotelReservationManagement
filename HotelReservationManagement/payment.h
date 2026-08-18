@@ -8,6 +8,7 @@
 #include <format>
 #include <ctime>
 #include <sstream>
+#include <conio.h>
 #include "models.h"
 #include "reservation.h"
 #include "file_io.h"
@@ -227,7 +228,7 @@ void print_receipt(Payment payment) {
 	// print same info as invoice
 	print_invoice(payment);
 
-	cout << endl;
+	empty_line();
 
 	print_table_row(format("|{:<23}: {}", "Payment Method", payment.paymentMethod));
 	print_table_row(format("|{:<23}: {}", "Amount Paid", payment.amountPaid));
@@ -235,18 +236,23 @@ void print_receipt(Payment payment) {
 	print_table_row(format("|{:<23}: {}", "Payment Date", payment.paymentDate));
 	print_table_row(format("|{:<23}: {}", "Payment Status", payment.paymentStatus));
 
-	cout << endl;
+	empty_line();
 
 	// footer
 	print_header("Thanks For Your Payment");
 }
 
 void payment_successful(Payment payment) {
+	// clear
+	clear_screen();
+
 	// print receipt
 	print_receipt(payment);
 
-	int x;
-	cin >> x;
+	cout << endl;
+
+	cout << "Press any key to continue...";
+	_getch();
 }
 
 void confirm_payment_screen(Payment& payment, string payment_method) {
@@ -439,7 +445,7 @@ void unpaid_payments_screen() {
 
 	Reservation reservation;
 	// show the unpaid payment information
-	for (Payment payment : payments)
+	for (Payment& payment : payments)
 	{
 		// only show unpaid payment
 		if (payment.paymentStatus == "Unpaid")
