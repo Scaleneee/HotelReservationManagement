@@ -3,6 +3,7 @@
 #include "models.h"
 #include "file_io.h"
 #include "payment.h"
+#include "customer.h "
 #include "room.h"
 #include "ui.h"
 
@@ -30,9 +31,11 @@ int main() {
 	// initialization
 	// load all data from file to the list
 	load_all_data_from_file();
+	//calculate();
 
 	// application entrance
 	payment_menu();
+	//room_availability_menu();
 
 	return 0;
 }
