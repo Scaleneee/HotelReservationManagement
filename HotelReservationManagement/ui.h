@@ -23,6 +23,8 @@ void set_theme(string theme) {
 	}
 }
 
+
+
 void print_table_row(string text)
 {
 	cout << setw(79) << left << text << "|" << endl;
@@ -119,6 +121,39 @@ int get_menu_choice(int max) {
 
 		// valid choice
 		return choice;
+	}
+}
+
+double get_non_negative_amount(string prompt)
+{
+	double amount;
+
+	while (true)
+	{
+		cout << prompt;
+		cin >> amount;
+
+		// check non-numeric input
+		if (cin.fail())
+		{
+			cin.clear();
+			cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+			cout << "Invalid input. Please enter a valid amount." << endl;
+			continue;
+		}
+
+		// clear input buffer
+		cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+		// check negative amount
+		if (amount < 0)
+		{
+			cout << "Amount cannot be negative." << endl;
+			continue;
+		}
+
+		return amount;
 	}
 }
 

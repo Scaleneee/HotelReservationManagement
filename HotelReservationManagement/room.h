@@ -470,12 +470,8 @@ void room_availability_menu() {
         case 6:
             deleteRoom();
             break;
-
-        case 0:
-            break;
-
         default:
-            break;
+            return;
         }
 
     } while (choice != 0);
