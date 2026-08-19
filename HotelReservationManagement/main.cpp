@@ -34,8 +34,8 @@ int main() {
 	//calculate();
 
 	// application entrance
-	payment_menu();
-	//room_availability_menu();
+	//payment_menu();
+	room_availability_menu();
 
 	//customerMembershipMenu();
 	
