@@ -1049,6 +1049,306 @@ void process_refund_screen() {
 	} while (!valid);
 }
 
+void deposit_settlement_successful_screen(Payment payment)
+{
+	clear_screen();
+
+	print_header("Deposit Settlement Successful");
+
+	empty_line();
+
+	print_table_row(
+		format("{:<23}: {}",
+			"|Payment ID",
+			payment.paymentID)
+	);
+
+	print_table_row(
+		format("{:<23}: {}",
+			"|Reservation ID",
+			payment.reservationID)
+	);
+
+	empty_line();
+
+	print_table_row(
+		format("{:<23}: RM{:>9.2f}",
+			"|Damage Charge",
+			payment.damageCharge)
+	);
+
+	print_table_row(
+		format("{:<23}: RM{:>9.2f}",
+			"|Deposit Retained",
+			payment.depositRetained)
+	);
+
+	print_table_row(
+		format("{:<23}: RM{:>9.2f}",
+			"|Deposit Returned",
+			payment.depositReturned)
+	);
+
+	print_table_row(
+		format("{:<23}: {}",
+			"|Payment Status",
+			payment.paymentStatus)
+	);
+
+	empty_line();
+
+	print_table_row("|Deposit settlement completed successfully.");
+
+	empty_line();
+
+	print_divider_with_space(false);
+
+	cout << "Press any key to continue...";
+	_getch();
+}
+
+void settle_deposit_screen(Payment& payment)
+{
+	// clear screen
+	clear_screen();
+
+	// header
+	print_header("Settle Deposit");
+
+	empty_line();
+
+	// payment information
+	print_table_row(
+		format("{:<23}: {}",
+			"|Payment ID",
+			payment.paymentID)
+	);
+
+	print_table_row(
+		format("{:<23}: {}",
+			"|Reservation ID",
+			payment.reservationID)
+	);
+
+	empty_line();
+
+	// deposit amount
+	print_table_row(
+		format("{:<23}: RM{:>9.2f}",
+			"|Security Deposit",
+			payment.depositAmount)
+	);
+
+	empty_line();
+	print_divider_with_space(false);
+
+	// ask charges
+	double damageCharge =
+		get_non_negative_amount("Enter Damage Charge     : RM ");
+
+	double additionalCharge =
+		get_non_negative_amount("Enter Additional Charge : RM ");
+
+	// calculate total deduction
+	double totalDeduction =
+		damageCharge + additionalCharge;
+
+	double depositReturned;
+	double depositRetained;
+
+	// deduction exceeds deposit
+	if (totalDeduction >= payment.depositAmount)
+	{
+		depositReturned = 0.0;
+		depositRetained = payment.depositAmount;
+	}
+	else
+	{
+		depositRetained = totalDeduction;
+
+		depositReturned =
+			payment.depositAmount - totalDeduction;
+	}
+
+	empty_line();
+
+	// display charges
+	print_table_row(
+		format("{:<23}: RM{:>9.2f}",
+			"|Damage Charge",
+			damageCharge)
+	);
+
+	print_table_row(
+		format("{:<23}: RM{:>9.2f}",
+			"|Additional Charge",
+			additionalCharge)
+	);
+
+	empty_line();
+	print_divider();
+
+	// settlement result
+	print_table_row(
+		format("{:<23}: RM{:>9.2f}",
+			"|Deposit Retained",
+			depositRetained)
+	);
+
+	print_table_row(
+		format("{:<23}: RM{:>9.2f}",
+			"|Deposit Returned",
+			depositReturned)
+	);
+
+	empty_line();
+	print_divider_with_space(false);
+
+	// confirm settlement
+	cout << "Confirm Deposit Settlement?" << endl;
+
+	empty_line();
+
+	print_table_row("|  [1] Confirm");
+	print_table_row("|  [0] Back");
+
+	empty_line();
+	print_divider_with_space(false);
+
+	int choice = get_menu_choice(1);
+
+	// back
+	if (choice == 0)
+	{
+		return;
+	}
+
+	// update payment
+	payment.damageCharge = damageCharge;
+	payment.additionalCharge += additionalCharge;
+	payment.depositRetained = depositRetained;
+	payment.depositReturned = depositReturned;
+
+	// payment lifecycle completed
+	payment.paymentStatus = "Completed";
+
+	// save changes
+	save_payments_to_file();
+
+	// successful screen
+	deposit_settlement_successful_screen(payment);
+}
+
+void settle_deposit_payments_screen()
+{
+	// clear
+	clear_screen();
+
+	// header
+	print_header("Settle Deposit");
+
+	empty_line();
+
+	// store payments that are allowed to settle deposit
+	vector<Payment*> settlement_payments;
+
+	for (Payment& payment : payments)
+	{
+		// only paid payments
+		if (payment.paymentStatus != "Paid")
+		{
+			continue;
+		}
+
+		// get reservation
+		Reservation* reservation =
+			get_reservation_by_id(payment.reservationID);
+
+		if (reservation == nullptr)
+		{
+			continue;
+		}
+
+		// only reservation ready for checkout/deposit settlement
+		if (reservation->reservationStatus == "Checked-out")
+		{
+			settlement_payments.push_back(&payment);
+		}
+	}
+
+	// no payment available
+	if (settlement_payments.empty())
+	{
+		print_table_row("|No payment available for deposit settlement.");
+
+		empty_line();
+		print_divider_with_space(false);
+
+		cout << "Press any key to continue...";
+		_getch();
+
+		return;
+	}
+
+	// display payments
+	print_payment_table(settlement_payments);
+
+	// ask staff to select payment
+	string paymentID;
+
+	while (true)
+	{
+		cout << "Enter Payment ID to settle deposit [0 to back]: ";
+		cin >> paymentID;
+
+		// back
+		if (paymentID == "0")
+		{
+			return;
+		}
+
+		// uppercase
+		transform(
+			paymentID.begin(),
+			paymentID.end(),
+			paymentID.begin(),
+			::toupper
+		);
+
+		// check format
+		if (!check_payment_id_format(paymentID))
+		{
+			cout << "Payment ID format incorrect..." << endl;
+			continue;
+		}
+
+		// check whether payment is inside settlement list
+		bool found = false;
+
+		for (Payment* payment : settlement_payments)
+		{
+			if (payment != nullptr &&
+				payment->paymentID == paymentID)
+			{
+				found = true;
+
+				// proceed to settlement screen
+				settle_deposit_screen(*payment);
+
+				break;
+			}
+		}
+
+		if (!found)
+		{
+			cout << "Payment not available for deposit settlement..." << endl;
+			continue;
+		}
+
+		return;
+	}
+}
+
 void payment_menu() {
 
 	int choice;
@@ -1090,6 +1390,7 @@ void payment_menu() {
 			break;
 		case 4:
 			// settle deposit
+			settle_deposit_payments_screen();
 			break;
 		case 5:
 			// generate report
