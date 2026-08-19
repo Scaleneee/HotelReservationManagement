@@ -270,9 +270,6 @@ void print_receipt(Payment payment) {
 	print_table_row(format("|{:<23}: {}", "Payment Status", payment.paymentStatus));
 
 	empty_line();
-
-	// footer
-	print_header("Thanks For Your Payment");
 }
 
 void payment_successful(Payment payment) {
@@ -284,6 +281,8 @@ void payment_successful(Payment payment) {
 
 	cout << endl;
 
+	// footer
+	print_header("Thanks For Your Payment");
 	cout << "Press any key to continue...";
 	_getch();
 }
@@ -843,6 +842,213 @@ void search_payment_screen() {
 
 }
 
+void refund_successful_screen(Payment payment)
+{
+	// clear screen
+	clear_screen();
+
+	// header
+	print_header("Refund Successful");
+
+	empty_line();
+
+	// payment information
+	print_table_row(
+		format("{:<23}: {}",
+			"|Payment ID",
+			payment.paymentID)
+	);
+
+	print_table_row(
+		format("{:<23}: {}",
+			"|Reservation ID",
+			payment.reservationID)
+	);
+
+	empty_line();
+
+	// refund information
+	print_table_row(
+		format("{:<23}: RM{:>9.2f}",
+			"|Refund Amount",
+			payment.refundAmount)
+	);
+
+	print_table_row(
+		format("{:<23}: RM{:>9.2f}",
+			"|Deposit Retained",
+			payment.depositRetained)
+	);
+
+	print_table_row(
+		format("{:<23}: {}",
+			"|Payment Status",
+			payment.paymentStatus)
+	);
+
+	empty_line();
+
+	print_divider_with_space(false);
+
+	cout << endl;
+	cout << "Refund completed successfully." << endl;
+
+	cout << endl;
+	cout << "Press any key to continue...";
+	_getch();
+}
+
+void refund_detail_screen(Payment payment) {
+	// clear
+	clear_screen();
+
+	// show receipt
+	print_receipt(payment);
+
+	cout << endl;
+
+	// calculate refund information
+	double refundAmount =
+		payment.roomFee - payment.membershipDiscount;
+
+	double depositRetained =
+		payment.depositAmount;
+
+	// display refund summary
+	print_divider();
+
+	print_table_row(
+		format("{:<23}: RM{:>9.2f}",
+			"|Refund Amount",
+			refundAmount)
+	);
+
+	print_table_row(
+		format("{:<23}: RM{:>9.2f}",
+			"|Deposit Retained",
+			depositRetained)
+	);
+
+	print_divider();
+
+	cout << endl;
+
+	// ask confirm refund
+	cout << "Confirm Refund?" << endl;
+	cout << endl;
+
+	cout << "  [1] Confirm Refund" << endl;
+	cout << "  [0] Back" << endl;
+	cout << endl;
+
+	int choice = get_menu_choice(1);
+
+	// back
+	if (choice == 0)
+	{
+		return;
+	}
+
+	// process refund
+	payment.refundAmount = refundAmount;
+	payment.depositRetained = depositRetained;
+	payment.depositReturned = 0.0;
+	payment.paymentStatus = "Refunded";
+
+	// save changes
+	save_payments_to_file();
+
+	// show successful refund screen
+	refund_successful_screen(payment);
+
+}
+
+void process_refund_screen() {
+	// clear screen
+	clear_screen();
+
+	// header
+	print_header("Process Refund");
+
+	// get the paid, cancelled payments list
+	vector<Payment*> refundable_payments;
+
+	for (Payment& payment : payments)
+	{
+		// get the reservation that belongs to this payment
+		Reservation* reservation =
+			get_reservation_by_id(payment.reservationID);
+
+		// reservation not found
+		if (reservation == nullptr)
+		{
+			continue;
+		}
+
+		// only cancelled reservation + paid payment can be refunded
+		if (reservation->reservationStatus == "Cancelled" &&
+			payment.paymentStatus == "Paid")
+		{
+			refundable_payments.push_back(&payment);
+		}
+	}
+
+	// display
+	print_payment_table(refundable_payments);
+
+	string paymentID;
+	bool valid = false;
+
+	// prompt user input
+	do
+	{
+		cout << "Enter Payment ID to process refund [0 to back]: ";
+		cin >> paymentID;
+
+		// back
+		if (paymentID == "0")
+		{
+			return;
+		}
+
+		// convert to uppercase
+		transform(
+			paymentID.begin(),
+			paymentID.end(),
+			paymentID.begin(),
+			::toupper
+		);
+
+		// check payment ID format
+		if (!check_payment_id_format(paymentID))
+		{
+			cout << "Payment ID format incorrect..." << endl;
+			continue;
+		}
+
+		// check whether payment exists in refundable list
+		for (Payment* payment : refundable_payments)
+		{
+			if (payment != nullptr &&
+				payment->paymentID == paymentID)
+			{
+				valid = true;
+
+				// proceed refund
+				refund_detail_screen(*payment);
+
+				break;
+			}
+		}
+
+		if (!valid)
+		{
+			cout << "Refundable payment not found..." << endl;
+		}
+
+	} while (!valid);
+}
+
 void payment_menu() {
 
 	int choice;
@@ -880,6 +1086,7 @@ void payment_menu() {
 			break;
 		case 3:
 			// process refund
+			process_refund_screen();
 			break;
 		case 4:
 			// settle deposit

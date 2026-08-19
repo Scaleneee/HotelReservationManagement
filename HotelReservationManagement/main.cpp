@@ -36,5 +36,9 @@ int main() {
 	// application entrance
 	payment_menu();
 	//room_availability_menu();
+
+	//customerMembershipMenu();
+	
+	//reservationMenu();
 	return 0;
 }
