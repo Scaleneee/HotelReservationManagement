@@ -40,7 +40,7 @@ void manageMembership(
 );
 
 void viewBookingHistory(
-	const string& customerID,
+	const string& customerName,
 	const vector<Reservation>& reservation
 );
 /*
@@ -317,7 +317,7 @@ int selectCustomerByname(const vector<Customer>& customers, const string& custom
 
 	for (size_t j = 0; j < matchIndex.size(); j++) {
 		cout << "  [" << (j + 1) << "] " << customers[matchIndex[j]].customerID
-			<< " - " << customers[matchIndex[j]].name << endl;
+			<< " - " << customers[matchIndex[j]].name << "  # " << customers[matchIndex[j]].contact << endl;
 	}
 	int choice;
 	cout << "Which one do you want? [1 - " << matchIndex.size() << "]: ";
@@ -551,7 +551,11 @@ void updateCustomer(vector<Customer>& customers) {
 	print_header("Update Customer");
 	cout << endl;
 
-	string customerName = getNonEmptyInput("Enter Customer Name to Update : ");
+	string customerName = getNonEmptyInput("Enter Customer Name to Update [0 to back] : ");
+	if (toUpperText(customerName) == "0") {
+		return;
+	}
+
 	int index = selectCustomerByname(customers, customerName);
 
 	if (index == -1) {
@@ -649,7 +653,11 @@ void activateCustomer(vector<Customer>& customers) {
 	print_header("Activate Customer");
 	cout << endl;
 
-	string customerName= getNonEmptyInput("Enter Customer Name to activate : ");
+	string customerName= getNonEmptyInput("Enter Customer Name to activate [0 to back] : ");
+	if (toUpperText(customerName) == "0") {
+		return;
+	}
+
 	int index = selectCustomerByname(customers, customerName);
 
 	if (index == -1) {
@@ -695,7 +703,11 @@ void deactivateCustomer(vector<Customer>& customers, const vector<Reservation>& 
 	clear_screen();
 	print_header("Deactivate Customer");
 	cout << endl;
-	string customerName = getNonEmptyInput("Enter Customer Name to deactivate :");
+	string customerName = getNonEmptyInput("Enter Customer Name to deactivate [0 to back] : ");
+	if (toUpperText(customerName) == "0") {
+		return;
+	}
+
 	int index = selectCustomerByname(customers, customerName);
 
 	if (index == -1) {
@@ -761,7 +773,8 @@ void viewBookingHistory(const string& customerName, const vector<Reservation>& r
 	string customerID = customers[customerIndex].customerID;
 	bool found = false;
 
-	cout << "Customer ID   : " << customerID << endl << endl;
+	cout << endl;
+	cout << "Customer ID   : " << customerID << endl;
 	cout << "Customer Name : " << customers[customerIndex].name << endl;
 
 	cout << setw(15) << left << "Reserve ID"
@@ -916,7 +929,10 @@ void manageMembership(vector<Customer>& customers, vector<Membership>& membershi
 			print_header("Add Membership Points");
 			cout << endl;
 
-			string customerName= getNonEmptyInput("Enter Customer Name : ");
+			string customerName= getNonEmptyInput("Enter Customer Name [0 to back] : ");
+			if (toUpperText(customerName) == "0") {
+				break;    
+			}
 			int customerIndex = selectCustomerByname(customers, customerName);
 
 			if (customerIndex == -1) {
@@ -967,7 +983,10 @@ void manageMembership(vector<Customer>& customers, vector<Membership>& membershi
 			print_header("Redeem Membership Points");
 			cout << endl;
 
-			string customerName= getNonEmptyInput("Enter Customer Name : ");
+			string customerName= getNonEmptyInput("Enter Customer Name [0 to back] : ");
+			if (toUpperText(customerName) == "0") {
+				break;
+			}
 			int customerIndex = selectCustomerByname(customers, customerName);
 
 			if (customerIndex == -1) {
@@ -1024,7 +1043,10 @@ void manageMembership(vector<Customer>& customers, vector<Membership>& membershi
 			print_header("Activate Membership");
 			cout << endl;
 
-			string customerName = getNonEmptyInput("Enter customer Name : ");
+			string customerName = getNonEmptyInput("Enter customer Name [0 to back] : ");
+			if (toUpperText(customerName) == "0") {
+				break;
+			}
 			int customerIndex = selectCustomerByname(customers, customerName);
 
 			if (customerIndex == -1) {
@@ -1080,7 +1102,10 @@ void manageMembership(vector<Customer>& customers, vector<Membership>& membershi
 			print_header("Deactivate Membership");
 			cout << endl;
 
-			string customerName = getNonEmptyInput("Enter Customer Name : ");
+			string customerName = getNonEmptyInput("Enter Customer Name [0 to back] : ");
+			if (toUpperText(customerName) == "0") {
+				break;
+			}
 			int customerIndex = selectCustomerByname(customers, customerName);
 
 			if (customerIndex == -1) {
@@ -1166,7 +1191,11 @@ void customerMembershipMenu() {
 			break;
 
 		case 2: {
-			string customerName = getNonEmptyInput("Enter Customer Name: ");
+			string customerName = getNonEmptyInput("Enter Customer Name [0 to back] : ");
+			if (toUpperText(customerName) == "0") {
+				break;
+			}
+
 			searchCustomer(customers, memberships, customerName);
 			break;
 		}
@@ -1188,8 +1217,12 @@ void customerMembershipMenu() {
 			break;
 
 		case 7: {
-			string customerID = getNonEmptyInput("Enter Customer Name to view the booking history : ");
-			viewBookingHistory(customerID, reservations);
+			string customerName= getNonEmptyInput("Enter Customer Name to view the booking history [0 to back] : ");
+			if (toUpperText(customerName) == "0") {
+				break;
+			}
+			
+			viewBookingHistory(customerName, reservations);
 			break;
 		}
 
