@@ -30,11 +30,13 @@ int main() {
 
 	// initialization
 	// load all data from file to the list
-	load_all_data_from_file();
+	//load_all_data_from_file();
 	//calculate();
 
 	// application entrance
-	payment_menu();
+	//payment_menu();
 	//room_availability_menu();
+	reservationMenu();
+
 	return 0;
 }
