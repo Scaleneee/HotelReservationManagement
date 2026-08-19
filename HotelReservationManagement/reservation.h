@@ -4,6 +4,7 @@
 #include <sstream>
 #include <vector>
 #include "models.h"
+#include "ui.h"
 
 using namespace std;
 
@@ -135,7 +136,7 @@ int searchingReservationID(string reservationID) {
 
 // Booking Confirmation
 void bookingConfirmation(const Reservation& reservation) {
-	cout << "----------Booking Confirmation----------" << endl;
+	print_header("(Booking Confirmation)");
 	cout << left << setw(20) << "Reservation ID	: " << reservation.reservationID << endl;
 	cout << left << setw(20) << "Customer ID : " << reservation.customerID << endl;
 	cout << left << setw(20) << "Room Number : " << reservation.roomNumber << endl;
@@ -152,7 +153,7 @@ void bookingConfirmation(const Reservation& reservation) {
 void createReservation() {
 	Reservation newReservation;
 
-	cout << "\n---------- New Reservation ----------\n";
+	print_header("New Reservation");
 
 	// Find Customer using Customer ID
 	bool validCustomer;
@@ -267,7 +268,7 @@ void createReservation() {
 // Customer check in
 void customerCheckin() {
 	string reservationID;
-	cout << "\n---------- Customer Check-In----------\n";
+	print_header("Customer Check-In");
 	cout << "Enter Reservation ID : ";
 	getline(cin, reservationID);
 
@@ -298,7 +299,7 @@ void customerCheckin() {
 // Customer check out
 void customerCheckout() {
 	string reservationID;
-	cout << "\n---------- Customer Check-Out----------\n";
+	print_header("Customer Check-Out");
 	cout << "Enter Reservation ID : ";
 	getline(cin, reservationID);
 
@@ -329,7 +330,7 @@ void customerCheckout() {
 // Cancellation of reservation
 void cancelReservation() {
 	string reservationID;
-	cout << "\n---------- Cancel Reservation ----------\n";
+	print_header("Reservation Cancellation");
 	cout << "Enter Reservation ID : ";
 	getline(cin, reservationID);
 
@@ -481,8 +482,8 @@ void loadReservation(string filename = "reservations.txt") {
 void reservationMenu() {
 	int choice;
 
+	print_header("Reservation Menu");
 	do {
-		cout << "\n----------Reservation Menu ----------\n";
 		cout << "1. Create Reservation\n";
 		cout << "2. Customer Check-In\n";
 		cout << "3. Customer Check-Out\n";
