@@ -21,7 +21,8 @@ void registerCustomer(vector<Customer>& customers);
 
 bool searchCustomer(
 	const vector<Customer>& customers,
-	const string& customerID
+	const vector<Membership>& memberships,
+	const string& name
 );
 
 void updateCustomer(vector<Customer>& customers);
@@ -199,7 +200,7 @@ string getValidatedContact(const string& prompt) { // validation check wheter th
 }
 
 bool isValidICNumber(const string& ICNumber) {
-	regex pattern(R"(\d{2}-\d{4}-\d{2}-\d{4})");
+	regex pattern(R"(\d{6}-\d{2}-\d{4})");
 	return regex_match(ICNumber, pattern);
 }
 
@@ -211,7 +212,7 @@ string getValidatedICNumber(const string& prompt) { // validation check wheter t
 		getline(cin, input);
 
 		if (!isValidICNumber(input)) {
-			cout << "Invalid IC number. Please enter format of IC Number xx-xxxx-xx-xxxx." << endl;
+			cout << "Invalid IC number. Please enter format of IC Number xxxxxx-xx-xxxx." << endl;
 		}
 	} while (!isValidICNumber(input));
 
@@ -271,9 +272,17 @@ string getEndDate() {
 	return day + "/" + month + "/" + to_string(newYear); // result: "12/01/2027"
 }
 
-int findCustomerIndexByID(const vector<Customer>& customer, const string& customerID) { // Find customer using the customerId 
+int findCustomerIndexByID(const vector<Customer>& customer, const string& name) { // Find customer using the customerId 
 	for (int i = 0; i < static_cast<int>(customers.size()); i++) {
-		if (toUpperText(customers[i].customerID) == toUpperText(customerID)) {
+		if (toUpperText(customers[i].name) == toUpperText(name)) {
+			return i;
+		}
+	}
+	return -1;
+}
+int findCustomerIndexByName(const vector<Customer>& customers, const string& name) {
+	for (int i = 0; i < static_cast<int>(customers.size()); i++) {
+		if (toUpperText(customers[i].name) == toUpperText(name)) {
 			return i;
 		}
 	}
@@ -288,6 +297,41 @@ int findMembershipIndexByCustomerID(const vector<Membership>& memberships, const
 	}
 	return -1;
 }
+
+int selectCustomerByname(const vector<Customer>& customers, const string& customerName) {
+	vector<int> matchIndex;
+
+	for (int i = 0; i < static_cast<int>(customers.size()); i++) {
+		if (toUpperText(customers[i].name) == toUpperText(customerName)) {
+			matchIndex.push_back(i);
+		}
+	}
+	if (matchIndex.empty()) {
+		return -1;
+	}
+	if (matchIndex.size() == 1) {
+		return matchIndex[0];
+	}
+	cout << endl;
+	cout << matchIndex.size() << " Customer found with name " << customerName << "\:" << endl;
+
+	for (size_t j = 0; j < matchIndex.size(); j++) {
+		cout << "  [" << (j + 1) << "] " << customers[matchIndex[j]].customerID
+			<< " - " << customers[matchIndex[j]].name << endl;
+	}
+	int choice;
+	cout << "Which one do you want? [1 - " << matchIndex.size() << "]: ";
+
+	while (!(cin >> choice) || choice < 1 || choice > static_cast<int>(matchIndex.size())) {
+		cin.clear();
+		cin.ignore(1000, '\n');
+		cout << "Invalid input. Please enter a number between 1 and " << matchIndex.size() << ": ";
+	}
+	cin.ignore(1000, '\n');
+
+	return matchIndex[choice - 1];
+}
+
 
 bool hasActiveReservation(const string& customerID, const vector<Reservation>& reservations) { // check the customer is active or not
 	for (Reservation reservation : reservations) {
@@ -412,28 +456,28 @@ void updateMembershipTier(Membership& membership) { // update the membership lev
 void displayCustomerDetails(const Customer& customer) {
 	cout << endl;
 	print_header("Customer Details");
-	cout << "Customer ID    : " << customer.customerID << endl;
-	cout << "Name           : " << customer.name << endl;
-	cout << "Contact        : " << customer.contact << endl;
-	cout << "Gender         : " << customer.gender << endl;
-	cout << "IC Number      : " << customer.icNumber << endl;
-	cout << "Nationality    : " << customer.nationality << endl;
-	cout << "Birthday       : " << customer.birthday << endl;
-	cout << "Register Date  : " << customer.registerDate << endl;
-	cout << "Account Status : " << customer.accountStatus << endl;
+	cout << " Customer ID    : " << customer.customerID << endl;
+	cout << " Name           : " << customer.name << endl;
+	cout << " Contact        : " << customer.contact << endl;
+	cout << " Gender         : " << customer.gender << endl;
+	cout << " IC Number      : " << customer.icNumber << endl;
+	cout << " Nationality    : " << customer.nationality << endl;
+	cout << " Birthday       : " << customer.birthday << endl;
+	cout << " Register Date  : " << customer.registerDate << endl;
+	cout << " Account Status : " << customer.accountStatus << endl;
 }
 
 void displayMembershipDetails(const Membership& membership) {
 	cout << endl;
 	print_header("Membership Details");
-	cout << "Membership ID  : " << membership.membershipID << endl;
-	cout << "Customer ID    : " << membership.customerID << endl;
-	cout << "Level          : " << membership.level << endl;
-	cout << "Register Date  : " << membership.registerDate << endl;
-	cout << "Expiry Date    : " << membership.expiryDate << endl;
-	cout << "Points         : " << membership.points << endl;
-	cout << "Discount Rate  : " << fixed << setprecision(2) << membership.discountRate * 100 << "%" << endl;
-	cout << "Status         : " << membership.status << endl;
+	cout << " Membership ID  : " << membership.membershipID << endl;
+	cout << " Customer ID    : " << membership.customerID << endl;
+	cout << " Level          : " << membership.level << endl;
+	cout << " Register Date  : " << membership.registerDate << endl;
+	cout << " Expiry Date    : " << membership.expiryDate << endl;
+	cout << " Points         : " << membership.points << endl;
+	cout << " Discount Rate  : " << fixed << setprecision(2) << membership.discountRate * 100 << "%" << endl;
+	cout << " Status         : " << membership.status << endl;
 }
 
 // -------------------------------------- CUSTOMER FUNCTION --------------------------------------
@@ -441,14 +485,16 @@ void displayMembershipDetails(const Membership& membership) {
 void registerCustomer(vector<Customer>& customers) {
 	clear_screen();
 	print_header("Register Customer");
-	cout << endl;
 
 	Customer customer;
 	customer.customerID = generateCustomerID(customers);
 	customer.registerDate = getCurrentDate();
+	empty_line();
 
-	cout << left << setw(55) << ("Customer ID: " + customer.customerID)
-		<< "Register Date: " << customer.registerDate << endl;
+	cout << left << setw(53) << ("| Customer ID: " + customer.customerID)
+		<< "Register Date: " << customer.registerDate << setw(80 - 78) << right << "|" << endl;
+
+	print_divider_with_space(false);
 
 	customer.name = getNonEmptyInput("Enter Customer Name  : ");
 	customer.contact = getValidatedContact("Enter Contact Number : ");
@@ -469,33 +515,34 @@ void registerCustomer(vector<Customer>& customers) {
 }
 
 // Search Customer
-bool searchCustomer(const vector<Customer>& customers, const string& customerID) {
+bool searchCustomer(const vector<Customer>& customers, const vector<Membership>& memberships, const string& name) {
 	clear_screen();
 	print_header("Search Customer");
 	cout << endl;
 
-	int customerIndex = findCustomerIndexByID(customers, customerID);
+	bool found = false;
 
-	if (customerIndex == -1) {
+	for (int i = 0; i < static_cast<int>(customers.size()); i++) {
+		if (toUpperText(customers[i].name) == toUpperText(name)) {
+			found = true;
+			displayCustomerDetails(customers[i]);
+
+			int membershipIndex = findMembershipIndexByCustomerID(memberships, customers[i].customerID);
+			if (membershipIndex != -1) {
+				displayMembershipDetails(memberships[membershipIndex]);
+			}
+			else {
+				cout << "No membership record found." << endl;
+			}
+			cout << endl;
+		}
+	}
+	if (!found) {
 		cout << "Customer not found." << endl;
-		system("pause");
-		clear_screen();
-		return false;
-	}
-	cout << "Customer Found." << endl;
-	displayCustomerDetails(customers[customerIndex]);
-
-	int membershipIndex = findMembershipIndexByCustomerID(memberships, customerID);
-
-	if (membershipIndex != -1) {
-		displayMembershipDetails(memberships[membershipIndex]);
-	}
-	else {
-		cout << "No membership record found." << endl;
 	}
 	system("pause");
 	clear_screen();
-	return true;
+	return found;
 }
 
 // Update Customer
@@ -504,8 +551,8 @@ void updateCustomer(vector<Customer>& customers) {
 	print_header("Update Customer");
 	cout << endl;
 
-	string customerID = getNonEmptyInput("Enter Customer ID to Update : ");
-	int index = findCustomerIndexByID(customers, customerID);
+	string customerName = getNonEmptyInput("Enter Customer Name to Update : ");
+	int index = selectCustomerByname(customers, customerName);
 
 	if (index == -1) {
 		cout << "Customer not found." << endl;
@@ -514,7 +561,7 @@ void updateCustomer(vector<Customer>& customers) {
 		return;
 	}
 	if (toUpperText(customers[index].accountStatus) != "ACTIVE") {
-		cout << "Only ACTIVE Custome can be updated." << endl;
+		cout << "Only ACTIVE Customer can be updated." << endl;
 		system("pause");
 		clear_screen();
 		return;
@@ -526,17 +573,16 @@ void updateCustomer(vector<Customer>& customers) {
 		print_header("Update Customer");
 		displayCustomerDetails(customers[index]);
 
-		cout << endl;
-		cout << "[1] Update Name" << endl;
-		cout << "[2] Update Contact" << endl;
-		cout << "[3] Update Gender" << endl;
-		cout << "[4] Update IC Number" << endl;
-		cout << "[5] Update Nationality" << endl;
-		cout << "[6] Update Birthday" << endl;
-		cout << "[7] update Register Date" << endl;
-		cout << endl;
-		cout << "[0] Back" << endl;
-		cout << endl;
+		cout << "--------------------------------------------------------------------------------" << endl;
+		cout << "|  [1] Update Name" << setw(80 - 18) << right << "|" << endl;
+		cout << "|  [2] Update Contact" << setw(80 - 21) << right << "|" << endl;
+		cout << "|  [3] Update Gender" << setw(80 - 20) << right << "|" << endl;
+		cout << "|  [4] Update IC Number" << setw(80 - 23) << right << "|" << endl;
+		cout << "|  [5] Update Nationality" << setw(80 - 25) << right << "|" << endl;
+		cout << "|  [6] Update Birthday" << setw(80 - 22) << right << "|" << endl;
+		cout << "|  [7] update Register Date" << setw(80 - 27) << right << "|" << endl;
+		empty_line();
+		cout << "|  [0] Back" << setw(80 - 11) << right << "|" << endl;
 		print_divider();
 
 		choice = get_menu_choice(7);
@@ -545,49 +591,49 @@ void updateCustomer(vector<Customer>& customers) {
 		case 1:
 			customers[index].name = getNonEmptyInput("Enter New Name          : ");
 			save_customers_to_file();
-			cout << "Name updated successfully." << endl;
+			cout << "Name updated successfully!!" << endl;
 			system("pause");
 			break;
 
 		case 2:
 			customers[index].contact = getValidatedContact("Enter New Contact       : ");
 			save_customers_to_file();
-			cout << "Contact updated successfully." << endl;
+			cout << "Contact updated successfully!!" << endl;
 			system("pause");
 			break;
 
 		case 3:
 			customers[index].gender = getValidatedGender("Enter New Gender        : ");
 			save_customers_to_file();
-			cout << "Gender updated successfully." << endl;
+			cout << "Gender updated successfully!!" << endl;
 			system("pause");
 			break;
 
 		case 4:
 			customers[index].icNumber = getNonEmptyInput("Enter New IC Number     : ");
 			save_customers_to_file();
-			cout << "IC Number updated successfully." << endl;
+			cout << "IC Number updated successfully!!" << endl;
 			system("pause");
 			break;
 
 		case 5:
 			customers[index].nationality = getNonEmptyInput("Enter New Nationality   : ");
 			save_customers_to_file();
-			cout << "Nationality updated successfully." << endl;
+			cout << "Nationality updated successfully!!" << endl;
 			system("pause");
 			break;
 
 		case 6:
 			customers[index].birthday = getValidatedDate("Enter New Birthday      : ");
 			save_customers_to_file();
-			cout << "Birthday updated successfully." << endl;
+			cout << "Birthday updated successfully!!" << endl;
 			system("pause");
 			break;
 
 		case 7:
 			customers[index].registerDate = getValidatedDate("Enter New Register Date : ");
 			save_customers_to_file();
-			cout << "Register Date updated successfully." << endl;
+			cout << "Register Date updated successfully!!" << endl;
 			system("pause");
 			break;
 
@@ -603,8 +649,8 @@ void activateCustomer(vector<Customer>& customers) {
 	print_header("Activate Customer");
 	cout << endl;
 
-	string customerID = getNonEmptyInput("Enter Customer ID to activate : ");
-	int index = findCustomerIndexByID(customers, customerID);
+	string customerName= getNonEmptyInput("Enter Customer Name to activate : ");
+	int index = selectCustomerByname(customers, customerName);
 
 	if (index == -1) {
 		cout << "Customer not found." << endl;
@@ -649,8 +695,8 @@ void deactivateCustomer(vector<Customer>& customers, const vector<Reservation>& 
 	clear_screen();
 	print_header("Deactivate Customer");
 	cout << endl;
-	string customerID = getNonEmptyInput("Enter Customer ID to deactivate :");
-	int index = findCustomerIndexByID(customers, customerID);
+	string customerName = getNonEmptyInput("Enter Customer Name to deactivate :");
+	int index = selectCustomerByname(customers, customerName);
 
 	if (index == -1) {
 		cout << "Customer not found." << endl;
@@ -664,7 +710,7 @@ void deactivateCustomer(vector<Customer>& customers, const vector<Reservation>& 
 		clear_screen();
 		return;
 	}
-	if (hasActiveReservation(customerID, reservations)) {
+	if (hasActiveReservation(customers[index].customerID, reservations)) {	
 		cout << "Customer cannot be deactiveted because there is an active reservation." << endl;
 		system("pause");
 		clear_screen();
@@ -698,12 +744,25 @@ void deactivateCustomer(vector<Customer>& customers, const vector<Reservation>& 
 }
 
 // View Customer Booking History
-void viewBookingHistory(const string& customerID, const vector<Reservation>& reservation) {
+void viewBookingHistory(const string& customerName, const vector<Reservation>& reservation) {
 	clear_screen();
 	print_header("View Booking History");
 	cout << endl;
 
+
+	int customerIndex = selectCustomerByname(customers, customerName);
+
+	if (customerIndex == -1) {
+		cout << "Customer not found." << endl;
+		system("pause");
+		return;
+	}
+
+	string customerID = customers[customerIndex].customerID;
 	bool found = false;
+
+	cout << "Customer ID   : " << customerID << endl << endl;
+	cout << "Customer Name : " << customers[customerIndex].name << endl;
 
 	cout << setw(15) << left << "Reserve ID"
 		<< setw(12) << left << "Room No"
@@ -738,6 +797,7 @@ void viewBookingHistory(const string& customerID, const vector<Reservation>& res
 	system("pause");
 	clear_screen();
 }
+
 // -------------------------------------- MEMBERSHIP FUNCTION --------------------------------------
 // Manage the Membership
 void manageMembership(vector<Customer>& customers, vector<Membership>& membership) {
@@ -746,15 +806,16 @@ void manageMembership(vector<Customer>& customers, vector<Membership>& membershi
 	do {
 		clear_screen();
 		print_header("Manage Membership");
-		cout << "  [1] Register Membership" << endl;
-		cout << "  [2] View Membership Details" << endl;
-		cout << "  [3] Add Membership Points" << endl;
-		cout << "  [4] Redeem Membership Points" << endl;
-		cout << "  [5] Activate Membership" << endl;
-		cout << "  [6] Deactivate Membership" << endl;
-		cout << endl;
-		cout << "  [0] Back" << endl;
-		print_divider();
+		empty_line();
+		cout << "|  [1] Register Membership" << setw(80 - 26) << right << "|" << endl;
+		cout << "|  [2] View Membership Details" << setw(80 - 30) << right << "|" << endl;
+		cout << "|  [3] Add Membership Points" << setw(80 - 28) << right << "|" << endl;
+		cout << "|  [4] Redeem Membership Points" << setw(80 - 31) << right << "|" << endl;
+		cout << "|  [5] Activate Membership" << setw(80 - 26) << right << "|" << endl;
+		cout << "|  [6] Deactivate Membership" << setw(80 - 28) << right << "|" << endl;
+		empty_line();
+		cout << "|  [0] Back" << setw(80 - 11) << right << "|" << endl;
+		print_divider_with_space(false);
 
 		choice = get_menu_choice(6);
 
@@ -765,8 +826,8 @@ void manageMembership(vector<Customer>& customers, vector<Membership>& membershi
 			print_header("Register Membership");
 			cout << endl;
 
-			string customerID = getNonEmptyInput("Enter Customer ID : ");
-			int customerIndex = findCustomerIndexByID(customers, customerID);
+			string customerName= getNonEmptyInput("Enter Customer Name : ");
+			int customerIndex = selectCustomerByname(customers, customerName);
 
 			if (customerIndex == -1) {
 				cout << "Customer not found." << endl;
@@ -780,7 +841,7 @@ void manageMembership(vector<Customer>& customers, vector<Membership>& membershi
 				break;
 			}
 
-			int membershipIndex = findMembershipIndexByCustomerID(memberships, customerID);
+			int membershipIndex = findMembershipIndexByCustomerID(memberships, customerName);
 
 			if (membershipIndex != -1 && toUpperText(memberships[membershipIndex].status) == "ACTIVE") { // If the customer is the membersihp cannot be register
 				cout << "This customer already has an active membership." << endl;
@@ -828,9 +889,15 @@ void manageMembership(vector<Customer>& customers, vector<Membership>& membershi
 			print_header("View Membership Details");
 			cout << endl;
 
-			string customerID = getNonEmptyInput("Enter Customer ID : ");
-			int index = findMembershipIndexByCustomerID(memberships, customerID);
+			string customerName= getNonEmptyInput("Enter Customer Name : ");
+			int customerIndex = selectCustomerByname(customers, customerName);
 
+			if (customerIndex == -1) {
+				cout << "Customer not found." << endl;
+				system("pause");
+				break;
+			}
+			int index = findMembershipIndexByCustomerID(memberships, customers[customerIndex].customerID);
 			if (index == -1) {
 				cout << "Membership record not found." << endl;
 			}
@@ -843,16 +910,21 @@ void manageMembership(vector<Customer>& customers, vector<Membership>& membershi
 			break;
 		}
 
-			  // Add Membership points
-			  // Need combine with payment and the customer spend 1 ringgit add 1 point
-			  // ** Not yet change 
+		// Add Membership points
 		case 3: {
 			clear_screen();
 			print_header("Add Membership Points");
 			cout << endl;
 
-			string customerID = getNonEmptyInput("Enter Customer ID   : ");
-			int index = findMembershipIndexByCustomerID(memberships, customerID);
+			string customerName= getNonEmptyInput("Enter Customer Name : ");
+			int customerIndex = selectCustomerByname(customers, customerName);
+
+			if (customerIndex == -1) {
+				cout << "Customer not found." << endl;
+				system("pause");
+				break;
+			}
+			int index = findMembershipIndexByCustomerID(memberships, customers[customerIndex].customerID);
 
 			if (index == -1) {
 				cout << "Membership record not found." << endl;
@@ -889,17 +961,22 @@ void manageMembership(vector<Customer>& customers, vector<Membership>& membershi
 			break;
 		}
 
-			  // Redeem Membership Point
-			  // For example can upgrade the room type 
-			  // **Not yet change
+		// Redeem Membership Point
 		case 4: {
 			clear_screen();
 			print_header("Redeem Membership Points");
 			cout << endl;
 
-			string customerID = getNonEmptyInput("Enter Customer ID : ");
-			int index = findMembershipIndexByCustomerID(memberships, customerID);
+			string customerName= getNonEmptyInput("Enter Customer Name : ");
+			int customerIndex = selectCustomerByname(customers, customerName);
 
+			if (customerIndex == -1) {
+				cout << "Customer not found." << endl;
+				system("pause");
+				break;
+			}
+
+			int index = findMembershipIndexByCustomerID(memberships, customers[customerIndex].customerID);
 			if (index == -1) {
 				cout << "Membership record not found." << endl;
 				system("pause");
@@ -941,14 +1018,22 @@ void manageMembership(vector<Customer>& customers, vector<Membership>& membershi
 			break;
 		}
 
-			  // Activate Membership
+		// Activate Membership
 		case 5: {
 			clear_screen();
 			print_header("Activate Membership");
 			cout << endl;
 
-			string customerID = getNonEmptyInput("Enter customer ID : ");
-			int index = findMembershipIndexByCustomerID(memberships, customerID);
+			string customerName = getNonEmptyInput("Enter customer Name : ");
+			int customerIndex = selectCustomerByname(customers, customerName);
+
+			if (customerIndex == -1) {
+				cout << "Customer not found." << endl;
+				system("pause");
+				break;
+			}
+
+			int index = findMembershipIndexByCustomerID(memberships, customers[customerIndex].customerID);
 
 			if (index == -1) {
 				cout << "Membership record not found." << endl;
@@ -989,14 +1074,22 @@ void manageMembership(vector<Customer>& customers, vector<Membership>& membershi
 			break;
 		}
 
-			  // Deactivate Membership
+		// Deactivate Membership
 		case 6: {
 			clear_screen();
 			print_header("Deactivate Membership");
 			cout << endl;
 
-			string customerID = getNonEmptyInput("Enter Customer ID : ");
-			int index = findMembershipIndexByCustomerID(memberships, customerID);
+			string customerName = getNonEmptyInput("Enter Customer Name : ");
+			int customerIndex = selectCustomerByname(customers, customerName);
+
+			if (customerIndex == -1) {
+				cout << "Customer not found." << endl;
+				system("pause");
+				break;
+			}
+
+			int index = findMembershipIndexByCustomerID(memberships, customers[customerIndex].customerID);
 
 			if (index == -1) {
 				cout << "Membership record not found." << endl;
@@ -1021,13 +1114,15 @@ void manageMembership(vector<Customer>& customers, vector<Membership>& membershi
 				if (confirm != "Y" && confirm != "N") {
 					cout << "Invalid input. Please enter Y or N only." << endl;
 				}
-			} while (confirm != "Y" && confirm != "N");
+			} 
+			while (confirm != "Y" && confirm != "N");
 
 			if (confirm == "Y") {
 				memberships[index].status = "INACTIVE";
 				save_memberships_to_file();
 				cout << "Membership deactivated successfully!!" << endl;
 			}
+
 			else {
 				cout << "Deactivation cancelled." << endl;
 			}
@@ -1051,18 +1146,17 @@ void customerMembershipMenu() {
 	int choice;
 
 	do {
-		cout << "===========================================================" << endl;
-		cout << " CUSTOMER & MEMBERSHIP MANAGEMENT MENU" << endl;
-		cout << "[1] Register Customer" << endl;
-		cout << "[2] Search Customer" << endl;
-		cout << "[3] Update Customer" << endl;
-		cout << "[4] Activate Customer" << endl;
-		cout << "[5] Deactivate Customer" << endl;
-		cout << "[6] Manage Membership" << endl;
-		cout << "[7] View Booking History" << endl;
-		cout << endl;
-		cout << "[0] Back" << endl;
-		cout << "===========================================================" << endl;
+		print_header(" CUSTOMER & MEMBERSHIP MANAGEMENT MENU");
+		cout << "|  [1] Register Customer" << setw(80 - 24) << right << "|" << endl;
+		cout << "|  [2] Search Customer" << setw(80 - 22) << right << "|" << endl;
+		cout << "|  [3] Update Customer" << setw(80 - 22) << right << "|" << endl;
+		cout << "|  [4] Activate Customer" << setw(80 - 24) << right << "|" << endl;
+		cout << "|  [5] Deactivate Customer" << setw(80 - 26) << right << "|" << endl;
+		cout << "|  [6] Manage Membership" << setw(80 - 24) << right << "|" << endl;
+		cout << "|  [7] View Booking History" << setw(80 - 27) << right << "|" << endl;
+		empty_line();
+		cout << "|  [0] Back" << setw(80 - 11) << right << "|" << endl;
+		print_divider_with_space(false);
 		choice = get_menu_choice(7);
 
 
@@ -1072,8 +1166,8 @@ void customerMembershipMenu() {
 			break;
 
 		case 2: {
-			string customerID = getNonEmptyInput("Enter the ID to search : ");
-			searchCustomer(customers, customerID);
+			string customerName = getNonEmptyInput("Enter Customer Name: ");
+			searchCustomer(customers, memberships, customerName);
 			break;
 		}
 
@@ -1094,7 +1188,7 @@ void customerMembershipMenu() {
 			break;
 
 		case 7: {
-			string customerID = getNonEmptyInput("Enter Customer ID to view the booking history : ");
+			string customerID = getNonEmptyInput("Enter Customer Name to view the booking history : ");
 			viewBookingHistory(customerID, reservations);
 			break;
 		}
