@@ -265,10 +265,45 @@ void createReservation() {
 	bookingConfirmation(newReservation);
 }
 
+// Reservation List
+void printReservationList(string statusFilter1, string statusFilter2 = "") {
+	// header
+	string header = "Reservation " + statusFilter1;
+	if (statusFilter2 != "") {
+		header += " / " + statusFilter2;
+	}
+
+	print_header(header);
+
+	cout << left << setw(10) << "ID" << setw(12) << "CustomerID"
+		<< setw(8) << "Room" << setw(14) << "CheckIn"
+		<< setw(14) << "CheckOut" << setw(12) << "Status" << "\n";
+
+	bool found = false;
+	for (int i = 0; i < (int)reservations.size(); i++) {
+		Reservation record = reservations[i];
+		// che reservation status
+		bool match = (record.reservationStatus == statusFilter1) ||
+			(statusFilter2 != "" && record.reservationStatus == statusFilter2);
+
+		if (match) {
+			found = true;
+			cout << left << setw(10) << r.reservationID << setw(12) << r.customerID
+				<< setw(8) << r.roomNumber << setw(14) << r.checkInDate
+				<< setw(14) << r.checkOutDate << setw(12) << r.reservationStatus << "\n";
+		}
+	}
+	if (!found) {
+		cout << "(No matching reservation found)\n\n";
+	}
+}
+
 // Customer check in
 void customerCheckin() {
 	string reservationID;
 	print_header("Customer Check-In");
+	printReservationList("Booked");
+
 	cout << "Enter Reservation ID : ";
 	getline(cin, reservationID);
 
@@ -300,6 +335,8 @@ void customerCheckin() {
 void customerCheckout() {
 	string reservationID;
 	print_header("Customer Check-Out");
+	printReservationList("CheckedIn");
+
 	cout << "Enter Reservation ID : ";
 	getline(cin, reservationID);
 
@@ -415,32 +452,6 @@ void cancelReservation() {
 	cout << "Reservation " << reservationID << " has been cancelled..." << endl;
 }
 
-// save the reservation vector into reservations.txt
-void saveReservation(string filename = "reservations.txt") {
-	ofstream outFile(filename);
-
-	for (int i = 0; i < (int)reservations.size(); i++) {
-		Reservation record = reservations[i];
-		// the pattern while the data saved inside the reservation.txt
-		outFile << record.reservationID << "|"
-			<< record.customerID << "|"
-			<< record.roomNumber << "|"
-			<< record.checkInDate << "|"
-			<< record.checkOutDate << "|"
-			<< record.actualCheckInTime << "|"
-			<< record.actualCheckOutTime << "|"
-			<< record.numberOfGuests << "|"
-			<< record.numberOfNights << "|"
-			<< record.roomPrice << "|"
-			<< record.reservationStatus << "|"
-			<< record.cancellationReason << "\n";
-	}
-	outFile.close();
-
-	// success message
-	cout << "Saved " << reservations.size() << " reservation(s) to file..." << endl;
-}
-
 // read the records in reservations.txt
 void loadReservation(string filename = "reservations.txt") {
 	ifstream inFile(filename);
@@ -488,8 +499,7 @@ void reservationMenu() {
 		cout << "2. Customer Check-In\n";
 		cout << "3. Customer Check-Out\n";
 		cout << "4. Reservation Cancellation\n";
-		cout << "5. Save Reservations to File\n";
-		cout << "6. Exit\n";
+		cout << "5. Exit\n";
 		cout << "Enter choice : ";
 		cin >> choice;
 		cin.ignore();
@@ -508,9 +518,6 @@ void reservationMenu() {
 			cancelReservation();
 			break;
 		case 5:
-			saveReservation();
-			break;
-		case 6:
 			cout << "Exiting Reservation Menu...\n";
 			break;
 		default:
