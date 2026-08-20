@@ -13,8 +13,6 @@
 
 string getNonEmptyInput(const string& prompt);
 
-int getMenuChoice(int minChoice, int maxChoice);
-
 void customerMembershipMenu();
 
 void registerCustomer(vector<Customer>& customers);
@@ -313,7 +311,7 @@ int selectCustomerByname(const vector<Customer>& customers, const string& custom
 		return matchIndex[0];
 	}
 	cout << endl;
-	cout << matchIndex.size() << " Customer found with name " << customerName << "\:" << endl;
+	cout << matchIndex.size() << " Customer found with name " << customerName << ":" << endl;
 
 	for (size_t j = 0; j < matchIndex.size(); j++) {
 		cout << "  [" << (j + 1) << "] " << customers[matchIndex[j]].customerID

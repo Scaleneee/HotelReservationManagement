@@ -289,9 +289,9 @@ void printReservationList(string statusFilter1, string statusFilter2 = "") {
 
 		if (match) {
 			found = true;
-			cout << left << setw(10) << r.reservationID << setw(12) << r.customerID
-				<< setw(8) << r.roomNumber << setw(14) << r.checkInDate
-				<< setw(14) << r.checkOutDate << setw(12) << r.reservationStatus << "\n";
+			cout << left << setw(10) << record.reservationID << setw(12) << record.customerID
+				<< setw(8) << record.roomNumber << setw(14) << record.checkInDate
+				<< setw(14) << record.checkOutDate << setw(12) << record.reservationStatus << "\n";
 		}
 	}
 	if (!found) {
