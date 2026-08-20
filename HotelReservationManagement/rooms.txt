@@ -1,9 +1,16 @@
-201|Deluxe|King bed with larger room|2|280|Reserved
-301|Family|Two queen beds for family stay|4|420|Occupied
-401|Suite|Premium suite with living area|2|650|Housekeeping
-402|Suite|Premium suite with sea view|2|700|Maintenance
-101|Standard|one queen bed with city view|2|188|Reserved
-102|Standard|one queen bed|2|158|Available
-202|Deluxe|one king bed with larger room|2|280|Available
-303|Family|two queen bed for family stay|4|420|Available
-404|Suite|premium suite with sea view|2|700|Available
+101|Standard|One queen bed with city view|2|180.00|Reserved
+102|Standard|Two single beds|2|180.00|Available
+201|Deluxe|King bed with larger room|2|280.00|Reserved
+202|Deluxe|King bed with balcony|2|300.00|Available
+301|Family|Two queen beds for family stay|4|420.00|Occupied
+302|Family|Two queen beds with city view|4|450.00|Available
+401|Suite|Premium suite with living area|2|650.00|Housekeeping
+402|Suite|Premium suite with sea view|2|700.00|Maintenance
+501|Standard|Queen bed with garden view|2|220.00|Housekeeping
+502|Deluxe|King bed with balcony|2|320.00|Available
+503|Deluxe|King bed with city view|2|330.00|Available
+601|Family|Two queen beds|4|480.00|Housekeeping
+602|Family|Two queen beds with balcony|4|500.00|Reserved
+701|Suite|Executive suite|2|800.00|Reserved
+702|Suite|Executive suite with city view|2|850.00|Available
+703|Suite|Premium suite with sea view|2|900.00|Occupied
