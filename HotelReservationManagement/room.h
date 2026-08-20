@@ -17,21 +17,24 @@ int getValidatedPositiveInt(const string& prompt) {
     while (true) {
         cout << prompt;
 
+        //check whether the user entered a number
         if (cin >> value) {
             string remaining;
             getline(cin, remaining);
 
+            //only accept positive number
             if (remaining.find_first_not_of(" \t\r") == string::npos &&
                 value > 0) {
                 return value;
             }
         }
         else {
+            //clear invalid input
             cin.clear();
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
         }
 
-        //prompt error message
+        //display error message and ask user to enter again
         cout << "Invalid input. Please enter a positive whole number."
             << endl;
     }
@@ -43,10 +46,12 @@ double getValidatedPositiveDouble(const string& prompt) {
     while (true) {
         cout << prompt;
 
+        //check whether the user enter a number
         if (cin >> value) {
             string remaining;
             getline(cin, remaining);
 
+            //only accept the value > 0
             if (remaining.find_first_not_of(" \t\r") == string::npos &&
                 value > 0) {
                 return value;
@@ -70,6 +75,7 @@ string getValidatedText(const string& prompt) {
         cout << prompt;
         getline(cin, value);
 
+        //check whether the input is not empty or only spacing
         if (!value.empty() &&
             value.find_first_not_of(" \t") != string::npos) {
             return value;
@@ -103,6 +109,7 @@ int getValidatedCreateRoomNumber(const string& prompt) {
             }
         }
         else {
+            //clear invalid input
             cin.clear();
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
         }
@@ -122,12 +129,14 @@ int getValidatedRoomNumberOrBack(const string& prompt) {
             string remaining;
             getline(cin, remaining);
 
+            //0 to back
             if (remaining.find_first_not_of(" \t\r") == string::npos &&
                 roomNumber >= 0) {
                 return roomNumber;
             }
         }
         else {
+            //clear invalid input
             cin.clear();
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
         }
@@ -144,6 +153,7 @@ string getValidatedRoomType(const string& prompt) {
         cout << prompt;
         getline(cin, roomType);
 
+        //convert input to uppercase for easy compare
         string upperType = roomType;
 
         transform(
@@ -153,6 +163,7 @@ string getValidatedRoomType(const string& prompt) {
             ::toupper
         );
 
+        //check whether the roomtype is valid
         if (upperType == "STANDARD") {
             return "Standard";
         }
@@ -182,6 +193,7 @@ int getValidatedStatusChoice(const string& prompt) {
             string remaining;
             getline(cin, remaining);
 
+            //only accept 1-5
             if (remaining.find_first_not_of(" \t\r") == string::npos &&
                 choice >= 1 &&
                 choice <= 5) {
@@ -211,6 +223,7 @@ void waitForBack() {
             string remaining;
             getline(cin, remaining);
 
+            //allow 0 return to previous page
             if (remaining.find_first_not_of(" \t\r") == string::npos &&
                 choice == 0) {
                 return;
@@ -226,12 +239,19 @@ void waitForBack() {
 }
 
 Room* get_room_by_number(int roomNumber) {
+
+    //search through all room records
     for (Room& room : rooms) {
+
+        //check whether the room number is match
         if (room.roomNumber == roomNumber) {
+
+            //return the address of matched room
             return &room;
         }
     }
 
+    //return nullptr if the room is not found
     return nullptr;
 }
 
@@ -242,6 +262,7 @@ void displayAvailableRooms() {
 
     cout << endl;
 
+    //display the table headings
     cout << setw(10) << left << "Room No."
         << setw(15) << left << "Type"
         << setw(12) << left << "Capacity"
@@ -251,14 +272,17 @@ void displayAvailableRooms() {
 
     print_divider();
 
+    //store only rooms that are currently available
     vector<Room> availableRooms;
 
+    //search through all room records
     for (const Room& room : rooms) {
         if (room.roomStatus == "Available") {
             availableRooms.push_back(room);
         }
     }
 
+    //sort available rooms by room number in ascending
     sort(
         availableRooms.begin(),
         availableRooms.end(),
@@ -267,10 +291,12 @@ void displayAvailableRooms() {
         }
     );
 
+    //check whether there are any available room
     if (availableRooms.empty()) {
         cout << "No available rooms." << endl;
     }
     else {
+        //display all available room information
         for (const Room& room : availableRooms) {
             cout << setw(10) << left << room.roomNumber
                 << setw(15) << left << room.roomType
@@ -286,53 +312,155 @@ void displayAvailableRooms() {
 
     print_divider();
 
+    //return to previous page
     waitForBack();
 }
 
 void checkRoomStatus() {
-    clear_screen();
 
-    print_header("Check Room Status");
-
-    cout << endl;
-
+    //keep the status search page active until user choose back
     while (true) {
-        int roomNumber = getValidatedRoomNumberOrBack(
-            "Enter room number [0 to Back]: "
-        );
+        clear_screen();
 
-        if (roomNumber == 0) {
-            return;
-        }
-
-        Room* room = get_room_by_number(roomNumber);
-
-        if (room == nullptr) {
-            cout << endl;
-            cout << "Room not found. Please try again." << endl;
-            cout << endl;
-
-            continue;
-        }
+        print_header("Search Rooms by Status");
 
         cout << endl;
 
+        //display the room status option
+        cout << "Room Status:" << endl;
+        cout << " [1] Available" << endl;
+        cout << " [2] Reserved" << endl;
+        cout << " [3] Occupied" << endl;
+        cout << " [4] Housekeeping" << endl;
+        cout << " [5] Maintenance" << endl;
+
+        cout << endl;
+
+        cout << " [0] Back" << endl;
+
+        cout << endl;
+
+        int statusChoice = get_menu_choice(5);
+
+        //return to previous menu
+        if (statusChoice == 0) {
+            return;
+        }
+
+        string selectedStatus;
+
+        //convert the user's choice into corresponding room status
+        switch (statusChoice) {
+        case 1:
+            selectedStatus = "Available";
+            break;
+
+        case 2:
+            selectedStatus = "Reserved";
+            break;
+
+        case 3:
+            selectedStatus = "Occupied";
+            break;
+
+        case 4:
+            selectedStatus = "Housekeeping";
+            break;
+
+        case 5:
+            selectedStatus = "Maintenance";
+            break;
+        }
+
+        clear_screen();
+
+        print_header("Rooms with Status: " + selectedStatus);
+
+        cout << endl;
+
+        //display table 
+        cout << setw(10) << left << "Room No."
+            << setw(15) << left << "Type"
+            << setw(12) << left << "Capacity"
+            << setw(15) << left << "Price"
+            << setw(15) << left << "Status"
+            << endl;
+
         print_divider();
 
-        cout << "Room Number : "
-            << room->roomNumber << endl;
+        bool found = false;
 
-        cout << "Room Type   : "
-            << room->roomType << endl;
+        //store room that match the selected status
+        vector<Room> matchedRooms;
 
-        cout << "Room Status : "
-            << room->roomStatus << endl;
+        //search through all room records
+        for (const Room& room : rooms) {
+            if (room.roomStatus == selectedStatus) {
+                matchedRooms.push_back(room);
+            }
+        }
+
+        //sort matched rooms by room number in ascending
+        sort(
+            matchedRooms.begin(),
+            matchedRooms.end(),
+            [](const Room& a, const Room& b) {
+                return a.roomNumber < b.roomNumber;
+            }
+        );
+
+        //display all room that match the selected status
+        for (const Room& room : matchedRooms) {
+            found = true;
+
+            cout << setw(10) << left << room.roomNumber
+                << setw(15) << left << room.roomType
+                << setw(12) << left << room.capacity
+                << setw(15) << left
+                << fixed << setprecision(2)
+                << room.pricePerNight
+                << setw(15) << left
+                << room.roomStatus
+                << endl;
+        }
+
+        //display a msg if no matching room is found
+        if (!found) {
+            cout << "No rooms found with status: "
+                << selectedStatus << endl;
+        }
 
         print_divider();
 
-        waitForBack();
+        cout << endl;
+        cout << "[0] Back" << endl;
 
-        return;
+        int backChoice;
+
+        //allow 0 return to status search page
+        while (true) {
+            cout << "Enter choice: ";
+
+            if (cin >> backChoice) {
+                string remaining;
+                getline(cin, remaining);
+
+                if (remaining.find_first_not_of(" \t\r") == string::npos &&
+                    backChoice == 0) {
+                    break;
+                }
+            }
+            else {
+                cin.clear();
+                cin.ignore(
+                    numeric_limits<streamsize>::max(),
+                    '\n'
+                );
+            }
+
+            cout << "Invalid choice. Please enter 0 to Back."
+                << endl;
+        }
     }
 }
 
@@ -347,6 +475,7 @@ void searchRoom() {
 
     print_divider();
 
+    //display table
     cout << setw(10) << left << "Room No."
         << setw(15) << left << "Type"
         << setw(12) << left << "Capacity"
@@ -356,12 +485,15 @@ void searchRoom() {
 
     print_divider();
 
+    //check whether there are any room records
     if (rooms.empty()) {
         cout << "No room records found." << endl;
     }
     else {
+        //copy room records for sorting
         vector<Room> sortedRooms = rooms;
 
+        //sort rooms by room number in ascending
         sort(
             sortedRooms.begin(),
             sortedRooms.end(),
@@ -370,6 +502,7 @@ void searchRoom() {
             }
         );
 
+        //display all current room records
         for (const Room& room : sortedRooms) {
             cout << setw(10) << left << room.roomNumber
                 << setw(15) << left << room.roomType
@@ -387,17 +520,22 @@ void searchRoom() {
 
     cout << endl;
 
+    //allow user search for multiple rooms
     while (true) {
+
+        //get the room number to search
         int roomNumber = getValidatedRoomNumberOrBack(
             "Enter room number to search [0 to Back]: "
         );
 
+        //return previous page
         if (roomNumber == 0) {
             return;
         }
 
         Room* room = get_room_by_number(roomNumber);
 
+        //ask again if the room does not exist
         if (room == nullptr) {
             cout << endl;
             cout << "Room not found. Please try again." << endl;
@@ -441,6 +579,7 @@ void searchRoom() {
 
         int choice;
 
+        //validate choice
         while (true) {
             cout << "Enter choice: ";
 
@@ -462,6 +601,7 @@ void searchRoom() {
         if (choice == 0) {
             return;
         }
+        //1 continue to another loop
         cout << endl;
     }
 }
@@ -479,15 +619,18 @@ void createRoom() {
 
     Room newRoom;
 
+    //validate the room number and prevent duplicate
     while (true) {
         newRoom.roomNumber = getValidatedCreateRoomNumber(
             "Enter room number [0 to Back]: "
         );
 
+        //return to previous menu
         if (newRoom.roomNumber == 0) {
             return;
         }
 
+        //check whether the room number already exist
         Room* existingRoom =
             get_room_by_number(newRoom.roomNumber);
 
@@ -501,18 +644,23 @@ void createRoom() {
         cout << endl;
     }
 
+
+    //get and validate the room type
     newRoom.roomType = getValidatedRoomType(
         "Enter room type(Standard/Deluxe/Family/Suite) : "
     );
 
+
+    //get description (no need validate)
     newRoom.description = getValidatedText(
         "Enter description     : "
     );
 
+    //get and validate capacity
     newRoom.capacity = getValidatedPositiveInt(
         "Enter capacity        : "
     );
-
+    //get and validate the price
     newRoom.pricePerNight = getValidatedPositiveDouble(
         "Enter price per night : RM "
     );
@@ -528,6 +676,7 @@ void createRoom() {
 
     cout << endl;
 
+    //get and validate the selected room status
     int statusChoice = getValidatedStatusChoice(
         "Enter status [1-5]: "
     );
@@ -554,8 +703,10 @@ void createRoom() {
         break;
     }
 
+    //add the new room record 
     rooms.push_back(newRoom);
 
+    //save the updated room records
     save_rooms_to_file();
 
     cout << endl;
@@ -573,15 +724,18 @@ void updateRoomInfo() {
 
     Room* room = nullptr;
 
+    //keep asking until the valid room is found
     while (room == nullptr) {
         int roomNumber = getValidatedRoomNumberOrBack(
             "Enter room number to update [0 to Back]: "
         );
 
+        //return to previous menu
         if (roomNumber == 0) {
             return;
         }
 
+        //search for the room by room number
         room = get_room_by_number(roomNumber);
 
         if (room == nullptr) {
@@ -593,6 +747,7 @@ void updateRoomInfo() {
 
     cout << endl;
 
+    //display current room information
     print_header("Current Room Information");
 
     cout << endl;
@@ -626,6 +781,7 @@ void updateRoomInfo() {
 
     cout << endl;
 
+    //display current room type & get the new room type
     cout << "Current Room Type : "
         << room->roomType << endl;
 
@@ -635,6 +791,7 @@ void updateRoomInfo() {
 
     cout << endl;
 
+    //display current description & get the new description
     cout << "Current Description : "
         << room->description << endl;
 
@@ -644,6 +801,7 @@ void updateRoomInfo() {
 
     cout << endl;
 
+    //display current capacity & get the new capacity
     cout << "Current Capacity : "
         << room->capacity << endl;
 
@@ -653,6 +811,7 @@ void updateRoomInfo() {
 
     cout << endl;
 
+    //display current price and get the new price
     cout << "Current Price Per Night : RM "
         << fixed << setprecision(2)
         << room->pricePerNight << endl;
@@ -677,10 +836,12 @@ void updateRoomInfo() {
 
     cout << endl;
 
+    //get and validate the new room status
     int statusChoice = getValidatedStatusChoice(
         "Enter new status [1-5]: "
     );
 
+    //update the room status based on the user's choice
     switch (statusChoice) {
     case 1:
         room->roomStatus = "Available";
@@ -718,6 +879,7 @@ void deleteRoom() {
 
     cout << endl;
 
+    //keep asking until the valid room is selected or choose back
     while (true) {
         int roomNumber = getValidatedRoomNumberOrBack(
             "Enter room number to delete [0 to Back]: "
@@ -729,6 +891,7 @@ void deleteRoom() {
 
         Room* room = get_room_by_number(roomNumber);
 
+        //ask again if the room does not exist
         if (room == nullptr) {
             cout << endl;
             cout << "Room not found. Please try again." << endl;
@@ -737,6 +900,7 @@ void deleteRoom() {
             continue;
         }
 
+        //prevent deletion if the room is not available
         if (room->roomStatus != "Available") {
             cout << endl;
 
@@ -759,6 +923,7 @@ void deleteRoom() {
             continue;
         }
 
+        //remove the selected room from the room vector
         rooms.erase(
             remove_if(
                 rooms.begin(),
@@ -770,6 +935,7 @@ void deleteRoom() {
             rooms.end()
         );
 
+        //save the updated room records into the file
         save_rooms_to_file();
 
         cout << endl;
@@ -784,6 +950,7 @@ void deleteRoom() {
 void room_availability_menu() {
     int choice;
 
+    //keep displaying the menu until the user choose back
     do {
         clear_screen();
 
@@ -791,8 +958,9 @@ void room_availability_menu() {
 
         cout << endl;
 
+        //display all room availability management option
         cout << " [1] View Available Rooms" << endl;
-        cout << " [2] Search / View Room Information" << endl;
+        cout << " [2] Search Room" << endl;
         cout << " [3] Check Room Status" << endl;
         cout << " [4] Create New Room" << endl;
         cout << " [5] Update Room" << endl;
@@ -808,8 +976,10 @@ void room_availability_menu() {
 
         cout << endl;
 
+        //get and validate the user's menu choice
         choice = get_menu_choice(6);
 
+        //call the selected room management function
         switch (choice) {
         case 1:
             displayAvailableRooms();
@@ -835,6 +1005,7 @@ void room_availability_menu() {
             deleteRoom();
             break;
 
+        //return to previous page
         case 0:
             return;
         }
