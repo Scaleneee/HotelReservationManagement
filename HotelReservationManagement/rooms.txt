@@ -14,3 +14,4 @@
 701|Suite|Executive suite|2|800|Reserved
 702|Suite|Executive suite with city view|2|850|Available
 703|Suite|Premium suite with sea view|2|900|Occupied
+103|Standard|one queen bed with city view|2|288|Reserved

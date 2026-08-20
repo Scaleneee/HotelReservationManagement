@@ -31,6 +31,7 @@ int getValidatedPositiveInt(const string& prompt) {
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
         }
 
+        //prompt error message
         cout << "Invalid input. Please enter a positive whole number."
             << endl;
     }
@@ -78,6 +79,39 @@ string getValidatedText(const string& prompt) {
     }
 }
 
+int getValidatedCreateRoomNumber(const string& prompt) {
+    int roomNumber;
+
+    while (true) {
+        cout << prompt;
+
+        if (cin >> roomNumber) {
+            string remaining;
+            getline(cin, remaining);
+
+            // 0 to back
+            if (roomNumber == 0 && 
+                remaining.find_first_not_of("\t\r") == string::npos) {
+                return 0;
+            }
+
+            //room number must be 3 digit
+            if (remaining.find_first_not_of(" \t\r") == string::npos &&
+                roomNumber >= 100 &&
+                roomNumber <= 999) {
+                return roomNumber;
+            }
+        }
+        else {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        }
+
+        cout << "Invalid input. Please enter a valid room number (3-digits) or 0 to Back."
+            << endl;
+    }
+}
+
 int getValidatedRoomNumberOrBack(const string& prompt) {
     int roomNumber;
 
@@ -99,6 +133,41 @@ int getValidatedRoomNumberOrBack(const string& prompt) {
         }
 
         cout << "Invalid input. Please enter a valid room number or 0 to Back."
+            << endl;
+    }
+}
+
+string getValidatedRoomType(const string& prompt) {
+    string roomType;
+
+    while (true) {
+        cout << prompt;
+        getline(cin, roomType);
+
+        string upperType = roomType;
+
+        transform(
+            upperType.begin(),
+            upperType.end(),
+            upperType.begin(),
+            ::toupper
+        );
+
+        if (upperType == "STANDARD") {
+            return "Standard";
+        }
+        else if (upperType == "DELUXE") {
+            return "Deluxe";
+        }
+        else if (upperType == "FAMILY") {
+            return "Family";
+        }
+        else if (upperType == "SUITE") {
+            return "Suite";
+        }
+
+        cout << "Invalid room type." << endl;
+        cout << "Please enter Standard, Deluxe, Family, or Suite."
             << endl;
     }
 }
@@ -366,9 +435,34 @@ void searchRoom() {
 
         print_divider();
 
-        waitForBack();
+        cout << endl;
+        cout << "[1] Continue Search" << endl;
+        cout << "[0] Back" << endl;
 
-        return;
+        int choice;
+
+        while (true) {
+            cout << "Enter choice: ";
+
+            if (cin >> choice) {
+                string remaining;
+                getline(cin, remaining);
+
+                if (remaining.find_first_not_of("\t\r") == string::npos
+                    && (choice == 0 || choice == 1)) {
+                    break;
+                }
+            }
+            else {
+                cin.clear();
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            }
+            cout << "Invalid choice. Please enter 0 or 1." << endl;
+        }
+        if (choice == 0) {
+            return;
+        }
+        cout << endl;
     }
 }
 
@@ -386,7 +480,7 @@ void createRoom() {
     Room newRoom;
 
     while (true) {
-        newRoom.roomNumber = getValidatedRoomNumberOrBack(
+        newRoom.roomNumber = getValidatedCreateRoomNumber(
             "Enter room number [0 to Back]: "
         );
 
@@ -407,8 +501,8 @@ void createRoom() {
         cout << endl;
     }
 
-    newRoom.roomType = getValidatedText(
-        "Enter room type       : "
+    newRoom.roomType = getValidatedRoomType(
+        "Enter room type(Standard/Deluxe/Family/Suite) : "
     );
 
     newRoom.description = getValidatedText(
@@ -535,7 +629,7 @@ void updateRoomInfo() {
     cout << "Current Room Type : "
         << room->roomType << endl;
 
-    room->roomType = getValidatedText(
+    room->roomType = getValidatedRoomType(
         "Enter new room type   : "
     );
 
