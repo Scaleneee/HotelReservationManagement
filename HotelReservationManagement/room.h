@@ -4,11 +4,157 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <limits>
 #include "models.h"
 #include "file_io.h"
 #include "ui.h"
 
 using namespace std;
+
+int getValidatedPositiveInt(const string& prompt) {
+    int value;
+
+    while (true) {
+        cout << prompt;
+
+        if (cin >> value) {
+            string remaining;
+            getline(cin, remaining);
+
+            if (remaining.find_first_not_of(" \t\r") == string::npos &&
+                value > 0) {
+                return value;
+            }
+        }
+        else {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        }
+
+        cout << "Invalid input. Please enter a positive whole number."
+            << endl;
+    }
+}
+
+double getValidatedPositiveDouble(const string& prompt) {
+    double value;
+
+    while (true) {
+        cout << prompt;
+
+        if (cin >> value) {
+            string remaining;
+            getline(cin, remaining);
+
+            if (remaining.find_first_not_of(" \t\r") == string::npos &&
+                value > 0) {
+                return value;
+            }
+        }
+        else {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        }
+
+        cout << "Invalid input. Please enter a value greater than 0."
+            << endl;
+    }
+}
+
+
+string getValidatedText(const string& prompt) {
+    string value;
+
+    while (true) {
+        cout << prompt;
+        getline(cin, value);
+
+        if (!value.empty() &&
+            value.find_first_not_of(" \t") != string::npos) {
+            return value;
+        }
+
+        cout << "Input cannot be empty. Please try again." << endl;
+    }
+}
+
+int getValidatedRoomNumberOrBack(const string& prompt) {
+    int roomNumber;
+
+    while (true) {
+        cout << prompt;
+
+        if (cin >> roomNumber) {
+            string remaining;
+            getline(cin, remaining);
+
+            if (remaining.find_first_not_of(" \t\r") == string::npos &&
+                roomNumber >= 0) {
+                return roomNumber;
+            }
+        }
+        else {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        }
+
+        cout << "Invalid input. Please enter a valid room number or 0 to Back."
+            << endl;
+    }
+}
+
+int getValidatedStatusChoice(const string& prompt) {
+    int choice;
+
+    while (true) {
+        cout << prompt;
+
+        if (cin >> choice) {
+            string remaining;
+            getline(cin, remaining);
+
+            if (remaining.find_first_not_of(" \t\r") == string::npos &&
+                choice >= 1 &&
+                choice <= 5) {
+                return choice;
+            }
+        }
+        else {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        }
+
+        cout << "Invalid status. Please enter a number from 1 to 5."
+            << endl;
+    }
+}
+
+void waitForBack() {
+    int choice;
+
+    cout << endl;
+    cout << "[0] Back" << endl;
+
+    while (true) {
+        cout << "Enter choice: ";
+
+        if (cin >> choice) {
+            string remaining;
+            getline(cin, remaining);
+
+            if (remaining.find_first_not_of(" \t\r") == string::npos &&
+                choice == 0) {
+                return;
+            }
+        }
+        else {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        }
+
+        cout << "Invalid choice. Please enter 0 to Back." << endl;
+    }
+}
 
 Room* get_room_by_number(int roomNumber) {
     for (Room& room : rooms) {
@@ -31,7 +177,8 @@ void displayAvailableRooms() {
         << setw(15) << left << "Type"
         << setw(12) << left << "Capacity"
         << setw(15) << left << "Price"
-        << setw(15) << left << "Status" << endl;
+        << setw(15) << left << "Status"
+        << endl;
 
     print_divider();
 
@@ -43,10 +190,13 @@ void displayAvailableRooms() {
         }
     }
 
-    sort(availableRooms.begin(), availableRooms.end(),
+    sort(
+        availableRooms.begin(),
+        availableRooms.end(),
         [](const Room& a, const Room& b) {
             return a.roomNumber < b.roomNumber;
-        });
+        }
+    );
 
     if (availableRooms.empty()) {
         cout << "No available rooms." << endl;
@@ -56,19 +206,18 @@ void displayAvailableRooms() {
             cout << setw(10) << left << room.roomNumber
                 << setw(15) << left << room.roomType
                 << setw(12) << left << room.capacity
-                << setw(15) << left << fixed << setprecision(2)
+                << setw(15) << left
+                << fixed << setprecision(2)
                 << room.pricePerNight
-                << setw(15) << left << room.roomStatus << endl;
+                << setw(15) << left
+                << room.roomStatus
+                << endl;
         }
     }
 
     print_divider();
 
-    cout << endl;
-    cout << "Press Enter to return...";
-
-    string temp;
-    getline(cin, temp);
+    waitForBack();
 }
 
 void checkRoomStatus() {
@@ -78,73 +227,153 @@ void checkRoomStatus() {
 
     cout << endl;
 
-    int roomNumber;
+    while (true) {
+        int roomNumber = getValidatedRoomNumberOrBack(
+            "Enter room number [0 to Back]: "
+        );
 
-    cout << "Enter room number: ";
-    cin >> roomNumber;
-    cin.ignore(1000, '\n');
+        if (roomNumber == 0) {
+            return;
+        }
 
-    Room* room = get_room_by_number(roomNumber);
+        Room* room = get_room_by_number(roomNumber);
 
-    if (room == nullptr) {
-        cout << endl;
-        cout << "Room not found." << endl;
-    }
-    else {
-        cout << endl;
-        cout << "Room Number : " << room->roomNumber << endl;
-        cout << "Room Type   : " << room->roomType << endl;
-        cout << "Room Status : " << room->roomStatus << endl;
-    }
+        if (room == nullptr) {
+            cout << endl;
+            cout << "Room not found. Please try again." << endl;
+            cout << endl;
 
-    cout << endl;
-    cout << "Press Enter to return...";
+            continue;
+        }
 
-    string temp;
-    getline(cin, temp);
-}
-
-void getRoomInfo() {
-    clear_screen();
-
-    print_header("Room Information");
-
-    cout << endl;
-
-    int roomNumber;
-
-    cout << "Enter room number: ";
-    cin >> roomNumber;
-    cin.ignore(1000, '\n');
-
-    Room* room = get_room_by_number(roomNumber);
-
-    if (room == nullptr) {
-        cout << endl;
-        cout << "Room not found." << endl;
-    }
-    else {
         cout << endl;
 
         print_divider();
 
-        cout << "Room Number     : " << room->roomNumber << endl;
-        cout << "Room Type       : " << room->roomType << endl;
-        cout << "Description     : " << room->description << endl;
-        cout << "Capacity        : " << room->capacity << endl;
+        cout << "Room Number : "
+            << room->roomNumber << endl;
+
+        cout << "Room Type   : "
+            << room->roomType << endl;
+
+        cout << "Room Status : "
+            << room->roomStatus << endl;
+
+        print_divider();
+
+        waitForBack();
+
+        return;
+    }
+}
+
+void searchRoom() {
+    clear_screen();
+
+    print_header("Search Room");
+
+    cout << endl;
+
+    cout << "Current Room Information" << endl;
+
+    print_divider();
+
+    cout << setw(10) << left << "Room No."
+        << setw(15) << left << "Type"
+        << setw(12) << left << "Capacity"
+        << setw(15) << left << "Price"
+        << setw(15) << left << "Status"
+        << endl;
+
+    print_divider();
+
+    if (rooms.empty()) {
+        cout << "No room records found." << endl;
+    }
+    else {
+        vector<Room> sortedRooms = rooms;
+
+        sort(
+            sortedRooms.begin(),
+            sortedRooms.end(),
+            [](const Room& a, const Room& b) {
+                return a.roomNumber < b.roomNumber;
+            }
+        );
+
+        for (const Room& room : sortedRooms) {
+            cout << setw(10) << left << room.roomNumber
+                << setw(15) << left << room.roomType
+                << setw(12) << left << room.capacity
+                << setw(15) << left
+                << fixed << setprecision(2)
+                << room.pricePerNight
+                << setw(15) << left
+                << room.roomStatus
+                << endl;
+        }
+    }
+
+    print_divider();
+
+    cout << endl;
+
+    while (true) {
+        int roomNumber = getValidatedRoomNumberOrBack(
+            "Enter room number to search [0 to Back]: "
+        );
+
+        if (roomNumber == 0) {
+            return;
+        }
+
+        Room* room = get_room_by_number(roomNumber);
+
+        if (room == nullptr) {
+            cout << endl;
+            cout << "Room not found. Please try again." << endl;
+            cout << endl;
+
+            continue;
+        }
+
+        cout << endl;
+
+        print_header("Room Information");
+
+        cout << endl;
+
+        print_divider();
+
+        cout << "Room Number     : "
+            << room->roomNumber << endl;
+
+        cout << "Room Type       : "
+            << room->roomType << endl;
+
+        cout << "Description     : "
+            << room->description << endl;
+
+        cout << "Capacity        : "
+            << room->capacity << endl;
+
         cout << "Price Per Night : RM "
             << fixed << setprecision(2)
             << room->pricePerNight << endl;
-        cout << "Room Status     : " << room->roomStatus << endl;
+
+        cout << "Room Status     : "
+            << room->roomStatus << endl;
 
         print_divider();
+
+        waitForBack();
+
+        return;
     }
+}
 
-    cout << endl;
-    cout << "Press Enter to return...";
-
-    string temp;
-    getline(cin, temp);
+void getRoomInfo() {
+    searchRoom();
 }
 
 void createRoom() {
@@ -156,41 +385,46 @@ void createRoom() {
 
     Room newRoom;
 
-    cout << "Enter room number: ";
-    cin >> newRoom.roomNumber;
-    cin.ignore(1000, '\n');
+    while (true) {
+        newRoom.roomNumber = getValidatedRoomNumberOrBack(
+            "Enter room number [0 to Back]: "
+        );
 
-    Room* existingRoom = get_room_by_number(newRoom.roomNumber);
+        if (newRoom.roomNumber == 0) {
+            return;
+        }
 
-    if (existingRoom != nullptr) {
+        Room* existingRoom =
+            get_room_by_number(newRoom.roomNumber);
+
+        if (existingRoom == nullptr) {
+            break;
+        }
+
         cout << endl;
         cout << "Room number already exists." << endl;
-
+        cout << "Please enter another room number." << endl;
         cout << endl;
-        cout << "Press Enter to return...";
-
-        string temp;
-        getline(cin, temp);
-
-        return;
     }
 
-    cout << "Enter room type       : ";
-    getline(cin, newRoom.roomType);
+    newRoom.roomType = getValidatedText(
+        "Enter room type       : "
+    );
 
-    cout << "Enter description     : ";
-    getline(cin, newRoom.description);
+    newRoom.description = getValidatedText(
+        "Enter description     : "
+    );
 
-    cout << "Enter capacity        : ";
-    cin >> newRoom.capacity;
+    newRoom.capacity = getValidatedPositiveInt(
+        "Enter capacity        : "
+    );
 
-    cout << "Enter price per night : ";
-    cin >> newRoom.pricePerNight;
-    cin.ignore(1000, '\n');
-
-    int statusChoice;
+    newRoom.pricePerNight = getValidatedPositiveDouble(
+        "Enter price per night : RM "
+    );
 
     cout << endl;
+
     cout << "Room Status:" << endl;
     cout << " [1] Available" << endl;
     cout << " [2] Reserved" << endl;
@@ -199,9 +433,10 @@ void createRoom() {
     cout << " [5] Maintenance" << endl;
 
     cout << endl;
-    cout << "Enter status [1-5]: ";
-    cin >> statusChoice;
-    cin.ignore(1000, '\n');
+
+    int statusChoice = getValidatedStatusChoice(
+        "Enter status [1-5]: "
+    );
 
     switch (statusChoice) {
     case 1:
@@ -223,10 +458,6 @@ void createRoom() {
     case 5:
         newRoom.roomStatus = "Maintenance";
         break;
-
-    default:
-        newRoom.roomStatus = "Available";
-        break;
     }
 
     rooms.push_back(newRoom);
@@ -236,11 +467,7 @@ void createRoom() {
     cout << endl;
     cout << "Room created successfully." << endl;
 
-    cout << endl;
-    cout << "Press Enter to return...";
-
-    string temp;
-    getline(cin, temp);
+    waitForBack();
 }
 
 void updateRoomInfo() {
@@ -250,45 +477,103 @@ void updateRoomInfo() {
 
     cout << endl;
 
-    int roomNumber;
+    Room* room = nullptr;
 
-    cout << "Enter room number to update: ";
-    cin >> roomNumber;
-    cin.ignore(1000, '\n');
+    while (room == nullptr) {
+        int roomNumber = getValidatedRoomNumberOrBack(
+            "Enter room number to update [0 to Back]: "
+        );
 
-    Room* room = get_room_by_number(roomNumber);
+        if (roomNumber == 0) {
+            return;
+        }
 
-    if (room == nullptr) {
-        cout << endl;
-        cout << "Room not found." << endl;
+        room = get_room_by_number(roomNumber);
 
-        cout << endl;
-        cout << "Press Enter to return...";
-
-        string temp;
-        getline(cin, temp);
-
-        return;
+        if (room == nullptr) {
+            cout << endl;
+            cout << "Room not found. Please try again." << endl;
+            cout << endl;
+        }
     }
 
     cout << endl;
 
-    cout << "Enter new room type         : ";
-    getline(cin, room->roomType);
-
-    cout << "Enter new description       : ";
-    getline(cin, room->description);
-
-    cout << "Enter new capacity          : ";
-    cin >> room->capacity;
-
-    cout << "Enter new price per night   : ";
-    cin >> room->pricePerNight;
-    cin.ignore(1000, '\n');
-
-    int statusChoice;
+    print_header("Current Room Information");
 
     cout << endl;
+
+    print_divider();
+
+    cout << "Room Number     : "
+        << room->roomNumber << endl;
+
+    cout << "Room Type       : "
+        << room->roomType << endl;
+
+    cout << "Description     : "
+        << room->description << endl;
+
+    cout << "Capacity        : "
+        << room->capacity << endl;
+
+    cout << "Price Per Night : RM "
+        << fixed << setprecision(2)
+        << room->pricePerNight << endl;
+
+    cout << "Room Status     : "
+        << room->roomStatus << endl;
+
+    print_divider();
+
+    cout << endl;
+
+    print_header("Enter New Room Information");
+
+    cout << endl;
+
+    cout << "Current Room Type : "
+        << room->roomType << endl;
+
+    room->roomType = getValidatedText(
+        "Enter new room type   : "
+    );
+
+    cout << endl;
+
+    cout << "Current Description : "
+        << room->description << endl;
+
+    room->description = getValidatedText(
+        "Enter new description : "
+    );
+
+    cout << endl;
+
+    cout << "Current Capacity : "
+        << room->capacity << endl;
+
+    room->capacity = getValidatedPositiveInt(
+        "Enter new capacity    : "
+    );
+
+    cout << endl;
+
+    cout << "Current Price Per Night : RM "
+        << fixed << setprecision(2)
+        << room->pricePerNight << endl;
+
+    room->pricePerNight = getValidatedPositiveDouble(
+        "Enter new price per night : RM "
+    );
+
+    cout << endl;
+
+    cout << "Current Room Status : "
+        << room->roomStatus << endl;
+
+    cout << endl;
+
     cout << "Room Status:" << endl;
     cout << " [1] Available" << endl;
     cout << " [2] Reserved" << endl;
@@ -297,9 +582,10 @@ void updateRoomInfo() {
     cout << " [5] Maintenance" << endl;
 
     cout << endl;
-    cout << "Enter status [1-5]: ";
-    cin >> statusChoice;
-    cin.ignore(1000, '\n');
+
+    int statusChoice = getValidatedStatusChoice(
+        "Enter new status [1-5]: "
+    );
 
     switch (statusChoice) {
     case 1:
@@ -321,10 +607,6 @@ void updateRoomInfo() {
     case 5:
         room->roomStatus = "Maintenance";
         break;
-
-    default:
-        room->roomStatus = "Available";
-        break;
     }
 
     save_rooms_to_file();
@@ -332,11 +614,7 @@ void updateRoomInfo() {
     cout << endl;
     cout << "Room updated successfully!" << endl;
 
-    cout << endl;
-    cout << "Press Enter to return...";
-
-    string temp;
-    getline(cin, temp);
+    waitForBack();
 }
 
 void deleteRoom() {
@@ -346,75 +624,67 @@ void deleteRoom() {
 
     cout << endl;
 
-    int roomNumber;
+    while (true) {
+        int roomNumber = getValidatedRoomNumberOrBack(
+            "Enter room number to delete [0 to Back]: "
+        );
 
-    cout << "Enter room number: ";
-    cin >> roomNumber;
-    cin.ignore(1000, '\n');
-
-    bool found = false;
-
-    for (const Room& room : rooms) {
-        if (room.roomNumber == roomNumber) {
-            found = true;
-
-            if (room.roomStatus != "Available") {
-                cout << endl;
-
-                cout << "Cannot delete Room "
-                    << room.roomNumber
-                    << " because it is currently "
-                    << room.roomStatus
-                    << "." << endl;
-
-                cout << endl;
-                cout << "Only available rooms can be deleted." << endl;
-
-                cout << endl;
-                cout << "Press Enter to return...";
-
-                string temp;
-                getline(cin, temp);
-
-                return;
-            }
+        if (roomNumber == 0) {
+            return;
         }
-    }
 
-    if (!found) {
+        Room* room = get_room_by_number(roomNumber);
+
+        if (room == nullptr) {
+            cout << endl;
+            cout << "Room not found. Please try again." << endl;
+            cout << endl;
+
+            continue;
+        }
+
+        if (room->roomStatus != "Available") {
+            cout << endl;
+
+            cout << "Cannot delete Room "
+                << room->roomNumber
+                << " because it is currently "
+                << room->roomStatus
+                << "." << endl;
+
+            cout << "Only available rooms can be deleted."
+                << endl;
+
+            cout << endl;
+
+            cout << "Please enter another room number "
+                << "or enter 0 to Back." << endl;
+
+            cout << endl;
+
+            continue;
+        }
+
+        rooms.erase(
+            remove_if(
+                rooms.begin(),
+                rooms.end(),
+                [roomNumber](const Room& room) {
+                    return room.roomNumber == roomNumber;
+                }
+            ),
+            rooms.end()
+        );
+
+        save_rooms_to_file();
+
         cout << endl;
-        cout << "Room not found." << endl;
+        cout << "Room deleted successfully." << endl;
 
-        cout << endl;
-        cout << "Press Enter to return...";
-
-        string temp;
-        getline(cin, temp);
+        waitForBack();
 
         return;
     }
-
-    rooms.erase(
-        remove_if(
-            rooms.begin(),
-            rooms.end(),
-            [roomNumber](const Room& room) {
-                return room.roomNumber == roomNumber;
-            }
-        ),
-        rooms.end()
-    );
-
-    save_rooms_to_file();
-
-    cout << endl;
-    cout << "Room deleted successfully." << endl;
-
-    cout << endl;
-    cout << "Press Enter to return...";
-
-    string temp;
-    getline(cin, temp);
 }
 
 void room_availability_menu() {
@@ -452,7 +722,7 @@ void room_availability_menu() {
             break;
 
         case 2:
-            getRoomInfo();
+            searchRoom();
             break;
 
         case 3:
@@ -470,7 +740,8 @@ void room_availability_menu() {
         case 6:
             deleteRoom();
             break;
-        default:
+
+        case 0:
             return;
         }
 
