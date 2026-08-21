@@ -40,6 +40,37 @@ int getValidatedPositiveInt(const string& prompt) {
     }
 }
 
+int getValidatedCapacity(const string& prompt) {
+    int value;
+
+    while (true) {
+        cout << prompt;
+
+        //check whether the user entered a number
+        if (cin >> value) {
+            string remaining;
+            getline(cin, remaining);
+
+            //only accept capacity from 1 to 9 pax
+            if (remaining.find_first_not_of(" \t\r") == string::npos &&
+                value >= 1 &&
+                value <= 9) {
+                return value;
+            }
+        }
+        else {
+            //clear invalid input
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        }
+
+        //display error message and ask user to enter again
+        cout << "Invalid capacity. Please enter a whole number from 1 to 9 pax."
+            << endl;
+    }
+}
+
+
 double getValidatedPositiveDouble(const string& prompt) {
     double value;
 
@@ -96,7 +127,7 @@ int getValidatedCreateRoomNumber(const string& prompt) {
             getline(cin, remaining);
 
             // 0 to back
-            if (roomNumber == 0 && 
+            if (roomNumber == 0 &&
                 remaining.find_first_not_of("\t\r") == string::npos) {
                 return 0;
             }
@@ -163,7 +194,7 @@ string getValidatedRoomType(const string& prompt) {
             ::toupper
         );
 
-        //check whether the roomtype is valid
+        //check whether the room type is valid
         if (upperType == "STANDARD") {
             return "Standard";
         }
@@ -182,6 +213,55 @@ string getValidatedRoomType(const string& prompt) {
             << endl;
     }
 }
+
+string getValidatedRoomTypeChoice(const string& prompt) {
+    int choice;
+
+    while (true) {
+        cout << "Room Type:" << endl;
+        cout << " [1] Standard" << endl;
+        cout << " [2] Deluxe" << endl;
+        cout << " [3] Family" << endl;
+        cout << " [4] Suite" << endl;
+
+        cout << endl;
+        cout << prompt;
+
+        if (cin >> choice) {
+            string remaining;
+            getline(cin, remaining);
+
+            //only accept 1-4
+            if (remaining.find_first_not_of(" \t\r") == string::npos &&
+                choice >= 1 &&
+                choice <= 4) {
+
+                switch (choice) {
+                case 1:
+                    return "Standard";
+
+                case 2:
+                    return "Deluxe";
+
+                case 3:
+                    return "Family";
+
+                case 4:
+                    return "Suite";
+                }
+            }
+        }
+        else {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        }
+
+        cout << "Invalid room type. Please enter a number from 1 to 4."
+            << endl;
+        cout << endl;
+    }
+}
+
 
 int getValidatedStatusChoice(const string& prompt) {
     int choice;
@@ -471,15 +551,15 @@ void searchRoom() {
 
     cout << endl;
 
-    cout << "Current Room Information" << endl;
+    cout << "Current" << endl;
 
     print_divider();
 
     //display table
     cout << setw(10) << left << "Room No."
         << setw(15) << left << "Type"
-        << setw(12) << left << "Capacity"
-        << setw(15) << left << "Price"
+        //<< setw(12) << left << "Capacity"
+        //<< setw(15) << left << "Price"
         << setw(15) << left << "Status"
         << endl;
 
@@ -506,10 +586,10 @@ void searchRoom() {
         for (const Room& room : sortedRooms) {
             cout << setw(10) << left << room.roomNumber
                 << setw(15) << left << room.roomType
-                << setw(12) << left << room.capacity
-                << setw(15) << left
-                << fixed << setprecision(2)
-                << room.pricePerNight
+                //<< setw(12) << left << room.capacity
+                //<< setw(15) << left
+                //<< fixed << setprecision(2)
+                //<< room.pricePerNight
                 << setw(15) << left
                 << room.roomStatus
                 << endl;
@@ -646,8 +726,8 @@ void createRoom() {
 
 
     //get and validate the room type
-    newRoom.roomType = getValidatedRoomType(
-        "Enter room type(Standard/Deluxe/Family/Suite) : "
+    newRoom.roomType = getValidatedRoomTypeChoice(
+        "Enter room type [1-4]: "
     );
 
 
@@ -657,8 +737,8 @@ void createRoom() {
     );
 
     //get and validate capacity
-    newRoom.capacity = getValidatedPositiveInt(
-        "Enter capacity        : "
+    newRoom.capacity = getValidatedCapacity(
+        "Enter capacity [1-9 pax] : "
     );
     //get and validate the price
     newRoom.pricePerNight = getValidatedPositiveDouble(
@@ -745,131 +825,168 @@ void updateRoomInfo() {
         }
     }
 
-    cout << endl;
+    while (true) {
+        clear_screen();
 
-    //display current room information
-    print_header("Current Room Information");
+        print_header("Update Room");
 
-    cout << endl;
+        cout << endl;
 
-    print_divider();
+        //display current room information
+        print_header("Current Room Information");
 
-    cout << "Room Number     : "
-        << room->roomNumber << endl;
+        cout << endl;
 
-    cout << "Room Type       : "
-        << room->roomType << endl;
+        print_divider();
 
-    cout << "Description     : "
-        << room->description << endl;
+        cout << "Room Number     : "
+            << room->roomNumber << endl;
 
-    cout << "Capacity        : "
-        << room->capacity << endl;
+        cout << "Room Type       : "
+            << room->roomType << endl;
 
-    cout << "Price Per Night : RM "
-        << fixed << setprecision(2)
-        << room->pricePerNight << endl;
+        cout << "Description     : "
+            << room->description << endl;
 
-    cout << "Room Status     : "
-        << room->roomStatus << endl;
+        cout << "Capacity        : "
+            << room->capacity << endl;
 
-    print_divider();
+        cout << "Price Per Night : RM "
+            << fixed << setprecision(2)
+            << room->pricePerNight << endl;
 
-    cout << endl;
+        cout << "Room Status     : "
+            << room->roomStatus << endl;
 
-    print_header("Enter New Room Information");
+        print_divider();
 
-    cout << endl;
+        cout << endl;
 
-    //display current room type & get the new room type
-    cout << "Current Room Type : "
-        << room->roomType << endl;
+        print_header("Select Item to Update");
 
-    room->roomType = getValidatedRoomType(
-        "Enter new room type   : "
-    );
+        cout << endl;
 
-    cout << endl;
+        cout << " [1] Room Type" << endl;
+        cout << " [2] Description" << endl;
+        cout << " [3] Capacity" << endl;
+        cout << " [4] Price Per Night" << endl;
+        cout << " [5] Room Status" << endl;
 
-    //display current description & get the new description
-    cout << "Current Description : "
-        << room->description << endl;
+        cout << endl;
 
-    room->description = getValidatedText(
-        "Enter new description : "
-    );
+        cout << " [0] Back" << endl;
 
-    cout << endl;
+        cout << endl;
 
-    //display current capacity & get the new capacity
-    cout << "Current Capacity : "
-        << room->capacity << endl;
+        int updateChoice = get_menu_choice(5);
 
-    room->capacity = getValidatedPositiveInt(
-        "Enter new capacity    : "
-    );
+        //return to previous menu
+        if (updateChoice == 0) {
+            return;
+        }
 
-    cout << endl;
+        cout << endl;
 
-    //display current price and get the new price
-    cout << "Current Price Per Night : RM "
-        << fixed << setprecision(2)
-        << room->pricePerNight << endl;
+        switch (updateChoice) {
+        case 1:
+            //display current room type & get the new room type
+            cout << "Current Room Type : "
+                << room->roomType << endl;
 
-    room->pricePerNight = getValidatedPositiveDouble(
-        "Enter new price per night : RM "
-    );
+            cout << endl;
 
-    cout << endl;
+            room->roomType = getValidatedRoomTypeChoice(
+                "Enter new room type [1-4]: "
+            );
+            break;
 
-    cout << "Current Room Status : "
-        << room->roomStatus << endl;
+        case 2:
+            //display current description & get the new description
+            cout << "Current Description : "
+                << room->description << endl;
 
-    cout << endl;
+            room->description = getValidatedText(
+                "Enter new description : "
+            );
+            break;
 
-    cout << "Room Status:" << endl;
-    cout << " [1] Available" << endl;
-    cout << " [2] Reserved" << endl;
-    cout << " [3] Occupied" << endl;
-    cout << " [4] Housekeeping" << endl;
-    cout << " [5] Maintenance" << endl;
+        case 3:
+            //display current capacity & get the new capacity
+            cout << "Current Capacity : "
+                << room->capacity << endl;
 
-    cout << endl;
+            room->capacity = getValidatedCapacity(
+                "Enter new capacity [1-9 pax] : "
+            );
+            break;
 
-    //get and validate the new room status
-    int statusChoice = getValidatedStatusChoice(
-        "Enter new status [1-5]: "
-    );
+        case 4:
+            //display current price and get the new price
+            cout << "Current Price Per Night : RM "
+                << fixed << setprecision(2)
+                << room->pricePerNight << endl;
 
-    //update the room status based on the user's choice
-    switch (statusChoice) {
-    case 1:
-        room->roomStatus = "Available";
-        break;
+            room->pricePerNight = getValidatedPositiveDouble(
+                "Enter new price per night : RM "
+            );
+            break;
 
-    case 2:
-        room->roomStatus = "Reserved";
-        break;
+        case 5:
+            cout << "Current Room Status : "
+                << room->roomStatus << endl;
 
-    case 3:
-        room->roomStatus = "Occupied";
-        break;
+            cout << endl;
 
-    case 4:
-        room->roomStatus = "Housekeeping";
-        break;
+            cout << "Room Status:" << endl;
+            cout << " [1] Available" << endl;
+            cout << " [2] Reserved" << endl;
+            cout << " [3] Occupied" << endl;
+            cout << " [4] Housekeeping" << endl;
+            cout << " [5] Maintenance" << endl;
 
-    case 5:
-        room->roomStatus = "Maintenance";
-        break;
+            cout << endl;
+
+            //get and validate the new room status
+            {
+                int statusChoice = getValidatedStatusChoice(
+                    "Enter new status [1-5]: "
+                );
+
+                //update the room status based on the user's choice
+                switch (statusChoice) {
+                case 1:
+                    room->roomStatus = "Available";
+                    break;
+
+                case 2:
+                    room->roomStatus = "Reserved";
+                    break;
+
+                case 3:
+                    room->roomStatus = "Occupied";
+                    break;
+
+                case 4:
+                    room->roomStatus = "Housekeeping";
+                    break;
+
+                case 5:
+                    room->roomStatus = "Maintenance";
+                    break;
+                }
+            }
+            break;
+        }
+
+        save_rooms_to_file();
+
+        cout << endl;
+        cout << "Room updated successfully!" << endl;
+
+        waitForBack();
+
+        return;
     }
-
-    save_rooms_to_file();
-
-    cout << endl;
-    cout << "Room updated successfully!" << endl;
-
-    waitForBack();
 }
 
 void deleteRoom() {
@@ -921,6 +1038,81 @@ void deleteRoom() {
             cout << endl;
 
             continue;
+        }
+
+        cout << endl;
+
+        //display current room information before delete
+        print_header("Room Information");
+
+        cout << endl;
+
+        print_divider();
+
+        cout << "Room Number     : "
+            << room->roomNumber << endl;
+
+        cout << "Room Type       : "
+            << room->roomType << endl;
+
+        cout << "Description     : "
+            << room->description << endl;
+
+        cout << "Capacity        : "
+            << room->capacity << endl;
+
+        cout << "Price Per Night : RM "
+            << fixed << setprecision(2)
+            << room->pricePerNight << endl;
+
+        cout << "Room Status     : "
+            << room->roomStatus << endl;
+
+        print_divider();
+
+        cout << endl;
+
+        cout << "Are you sure you want to delete Room "
+            << room->roomNumber << "?" << endl;
+
+        cout << endl;
+
+        cout << " [1] Confirm Delete" << endl;
+        cout << " [0] Cancel" << endl;
+
+        cout << endl;
+
+        int confirmChoice;
+
+        //validate delete confirmation
+        while (true) {
+            cout << "Enter choice: ";
+
+            if (cin >> confirmChoice) {
+                string remaining;
+                getline(cin, remaining);
+
+                if (remaining.find_first_not_of(" \t\r") == string::npos &&
+                    (confirmChoice == 0 || confirmChoice == 1)) {
+                    break;
+                }
+            }
+            else {
+                cin.clear();
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            }
+
+            cout << "Invalid choice. Please enter 0 or 1." << endl;
+        }
+
+        //cancel delete and return to previous page
+        if (confirmChoice == 0) {
+            cout << endl;
+            cout << "Delete cancelled." << endl;
+
+            waitForBack();
+
+            return;
         }
 
         //remove the selected room from the room vector
@@ -1005,7 +1197,7 @@ void room_availability_menu() {
             deleteRoom();
             break;
 
-        //return to previous page
+            //return to previous page
         case 0:
             return;
         }
