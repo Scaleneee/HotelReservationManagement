@@ -9,6 +9,79 @@
 
 using namespace std;
 
+void create_unpaid_payment(const Reservation& reservation)
+{
+	Payment payment{};
+
+	// generate payment ID
+	int id = payments.size() + 1;
+
+	string number = to_string(id);
+
+	while (number.length() < 3)
+	{
+		number = "0" + number;
+	}
+
+	payment.paymentID = "PAY" + number;
+
+	// link payment with reservation
+	payment.reservationID = reservation.reservationID;
+
+	// unpaid payment information
+	payment.paymentDate = "";
+	payment.paymentMethod = "";
+	payment.paymentStatus = "Unpaid";
+
+	// reservation.roomPrice already contains total room fee
+	payment.roomFee = reservation.roomPrice;
+
+	// initially no discount
+	payment.membershipDiscount = 0.0;
+
+	// check customer membership
+	for (Membership& membership : memberships)
+	{
+		if (membership.customerID == reservation.customerID &&
+			membership.status == "Active")
+		{
+			payment.membershipDiscount =
+				payment.roomFee * membership.discountRate;
+
+			break;
+		}
+	}
+
+	// calculate deposit
+	payment.depositAmount =
+		calculate_deposit(payment.roomFee);
+
+	// initially no extra charges
+	payment.additionalCharge = 0.0;
+	payment.damageCharge = 0.0;
+
+	// calculate total amount
+	payment.totalAmount =
+		payment.roomFee
+		+ payment.depositAmount
+		- payment.membershipDiscount;
+
+	// not paid yet
+	payment.amountPaid = 0.0;
+	payment.change = 0.0;
+
+	// no refund / deposit settlement yet
+	payment.refundAmount = 0.0;
+	payment.depositReturned = 0.0;
+	payment.depositRetained = 0.0;
+
+	// add payment into vector
+	payments.push_back(payment);
+
+	// save payment data
+	save_payments_to_file();
+}
+
 /*
 	search the list and return the reservation obj pointer
 */
@@ -259,6 +332,11 @@ void createReservation() {
 	// add the reservation into the end of the reservation vector
 	reservations.push_back(newReservation);
 
+	save_reservations_to_file();
+
+	// create unpaid payment
+	create_unpaid_payment(newReservation);
+
 	//create reservation success message
 	cout << "\nReservation created successfully!\n";
 
@@ -327,6 +405,7 @@ void customerCheckin() {
 
 	// update reservation status
 	reservations[searchingID].reservationStatus = "CheckedIn";
+	save_reservations_to_file();
 
 	// customer check in success message
 	cout << "Customer checked in successfully for reservation " << reservationID << "\n";
@@ -360,6 +439,7 @@ void customerCheckout() {
 
 	// update reservation status
 	reservations[searchingID].reservationStatus = "CheckedOut";
+	save_reservations_to_file();
 
 	// customer check out success message
 	cout << "Customer checked out successfully for reservation " << reservationID << "\n";
@@ -448,6 +528,7 @@ void cancelReservation() {
 	// update reservation status
 	reservations[searchingID].reservationStatus = "Cancelled";
 	reservations[searchingID].cancellationReason = reason;
+	save_reservations_to_file();
 
 	// cancellation success message
 	cout << "Reservation " << reservationID << " has been cancelled..." << endl;

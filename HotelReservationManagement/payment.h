@@ -36,27 +36,6 @@ double calculate_total_amount(
 	return (roomFee + additionalCharge + calculate_deposit(roomFee)) - discount;
 }
 
-void create_unpaid_payment(Reservation reservation) {
-	// declare a new payment obj 
-	Payment payment;
-
-	// initialize
-	payment.paymentID = ""; // ltr use payment id generator to generate
-	payment.reservationID = reservation.reservationID;
-	// set to unpaid first
-	payment.paymentStatus = "UNPAID";
-	// calculate room fee
-	payment.roomFee = reservation.roomPrice * reservation.numberOfNights;
-	// calculate total amount
-	payment.totalAmount = calculate_total_amount(payment.roomFee, 0.0, 0.0);
-
-	// store into list
-	payments.push_back(payment);
-
-	// update to file
-	save_payments_to_file();
-}
-
 bool check_reservation_id_format(string reservationID) {
 	regex pattern(R"(^RES[0-9]{3}$)");
 	return regex_match(reservationID, pattern);
@@ -368,60 +347,71 @@ void confirm_payment_screen(Payment& payment, string payment_method) {
 	}
 }
 
-void process_payment_screen(Payment &payment) {
-	// clear
-	clear_screen();
+void process_payment_screen(Payment& payment)
+{
+	while (true)
+	{
+		clear_screen();
 
-	// print header
-	print_header("Process Payment");
-	empty_line();
+		print_header("Process Payment");
+		empty_line();
 
-	// print the invoice
-	print_invoice(payment);
+		print_invoice(payment);
 
-	cout << endl;
+		empty_line();
 
-	// ask user input
-	// variable use to store the information
-	string payment_method;
-		
-	// payment method
-	cout << "Select Payment Method: " << endl;
-	cout << endl;
+		print_table_row("|Select Payment Method:");
+		empty_line();
 
-	cout << "  [1] Cash" << endl;
-	cout << "  [2] Credit Card" << endl;
-	cout << "  [3] Debit Card" << endl;
-	cout << "  [4] E-Wallet" << endl;
+		print_table_row("|  [1] Cash");
+		print_table_row("|  [2] Credit Card");
+		print_table_row("|  [3] Debit Card");
+		print_table_row("|  [4] E-Wallet");
 
-	cout << endl;
-	cout << "  [0] Back" << endl;
-	cout << endl;
+		empty_line();
 
-	int choice = get_menu_choice(4);
+		print_table_row("|  [0] Back");
 
-	switch (choice) {
-	case 1:
-		// cash
-		payment_method = "Cash";
-		break;
-	case 2:
-		// credit card
-		payment_method = "Credit Card";
-		break;
-	case 3:
-		// debit card
-		payment_method = "Debit Card";
-		break;
-	case 4:
-		// eWallet
-		payment_method = "E-Wallet";
-		break;
-	default:
-		// 0, back
-		return;
+		empty_line();
+		print_divider_with_space(false);
+
+		int choice = get_menu_choice(4);
+
+		// back to payment detail
+		if (choice == 0)
+		{
+			return;
+		}
+
+		string payment_method;
+
+		switch (choice)
+		{
+		case 1:
+			payment_method = "Cash";
+			break;
+
+		case 2:
+			payment_method = "Credit Card";
+			break;
+
+		case 3:
+			payment_method = "Debit Card";
+			break;
+
+		case 4:
+			payment_method = "E-Wallet";
+			break;
+		}
+
+		confirm_payment_screen(payment, payment_method);
+
+		// successful payment
+		if (payment.paymentStatus == "Paid")
+		{
+			return;
+		}
 	}
-	confirm_payment_screen(payment, payment_method);
 }
 
 void print_payment_detail(Payment payment) {
@@ -437,20 +427,36 @@ void print_payment_detail(Payment payment) {
 	cout << endl;
 }
 
-void payment_detail_screen(Payment payment) {
-	// print choices
-	cout << "  [1] Proceed Payment" << endl;
-	cout << "  [0] Back" << endl;
-
-	cout << endl;
-
-	// ask user input
-	int choice = get_menu_choice(1);
-
-	if (choice == 1)
+void payment_detail_screen(Payment& payment)
+{
+	while (true)
 	{
-		// process payment
-		process_payment_screen(*get_payment_by_id(payment.paymentID));
+		// display payment detail
+		print_payment_detail(payment);
+
+		print_table_row("|  [1] Proceed Payment");
+		print_table_row("|  [0] Back");
+
+		empty_line();
+		print_divider_with_space(false);
+
+		int choice = get_menu_choice(1);
+
+		// back to unpaid payments screen
+		if (choice == 0)
+		{
+			return;
+		}
+
+		// proceed payment
+		process_payment_screen(payment);
+
+		// if payment successfully completed,
+		// don't show payment detail again
+		if (payment.paymentStatus == "Paid")
+		{
+			return;
+		}
 	}
 }
 
@@ -579,7 +585,7 @@ void unpaid_payments_screen() {
 			{
 				valid = true;
 				// call the function to show the payment detail
-				payment_detail_screen(*get_payment_by_reservation_id(reservationID));
+				payment_detail_screen(*payment);
 				break;
 			}
 		}
@@ -898,7 +904,7 @@ void refund_successful_screen(Payment payment)
 	_getch();
 }
 
-void refund_detail_screen(Payment payment) {
+void refund_detail_screen(Payment& payment) {
 	// clear
 	clear_screen();
 
@@ -963,55 +969,62 @@ void refund_detail_screen(Payment payment) {
 
 }
 
-void process_refund_screen() {
-	// clear screen
-	clear_screen();
-
-	// header
-	print_header("Process Refund");
-
-	// get the paid, cancelled payments list
-	vector<Payment*> refundable_payments;
-
-	for (Payment& payment : payments)
+void process_refund_screen()
+{
+	while (true)
 	{
-		// get the reservation that belongs to this payment
-		Reservation* reservation =
-			get_reservation_by_id(payment.reservationID);
+		clear_screen();
 
-		// reservation not found
-		if (reservation == nullptr)
+		print_header("Process Refund");
+
+		vector<Payment*> refundable_payments;
+
+		// filter refundable payments
+		for (Payment& payment : payments)
 		{
-			continue;
+			Reservation* reservation =
+				get_reservation_by_id(payment.reservationID);
+
+			if (reservation == nullptr)
+			{
+				continue;
+			}
+
+			if (reservation->reservationStatus == "Cancelled" &&
+				payment.paymentStatus == "Paid")
+			{
+				refundable_payments.push_back(&payment);
+			}
 		}
 
-		// only cancelled reservation + paid payment can be refunded
-		if (reservation->reservationStatus == "Cancelled" &&
-			payment.paymentStatus == "Paid")
+		// no refundable payment
+		if (refundable_payments.empty())
 		{
-			refundable_payments.push_back(&payment);
+			empty_line();
+
+			print_table_row("|No refundable payments available.");
+
+			empty_line();
+			print_divider_with_space(false);
+
+			cout << "Press any key to continue...";
+			_getch();
+
+			return;
 		}
-	}
 
-	// display
-	print_payment_table(refundable_payments);
+		print_payment_table(refundable_payments);
 
-	string paymentID;
-	bool valid = false;
+		string paymentID;
 
-	// prompt user input
-	do
-	{
 		cout << "Enter Payment ID to process refund [0 to back]: ";
 		cin >> paymentID;
 
-		// back
 		if (paymentID == "0")
 		{
 			return;
 		}
 
-		// convert to uppercase
 		transform(
 			paymentID.begin(),
 			paymentID.end(),
@@ -1019,34 +1032,41 @@ void process_refund_screen() {
 			::toupper
 		);
 
-		// check payment ID format
 		if (!check_payment_id_format(paymentID))
 		{
 			cout << "Payment ID format incorrect..." << endl;
+
+			cout << "Press any key to continue...";
+			_getch();
+
 			continue;
 		}
 
-		// check whether payment exists in refundable list
+		Payment* selectedPayment = nullptr;
+
 		for (Payment* payment : refundable_payments)
 		{
 			if (payment != nullptr &&
 				payment->paymentID == paymentID)
 			{
-				valid = true;
-
-				// proceed refund
-				refund_detail_screen(*payment);
-
+				selectedPayment = payment;
 				break;
 			}
 		}
 
-		if (!valid)
+		if (selectedPayment == nullptr)
 		{
 			cout << "Refundable payment not found..." << endl;
+
+			cout << "Press any key to continue...";
+			_getch();
+
+			continue;
 		}
 
-	} while (!valid);
+		// open refund detail
+		refund_detail_screen(*selectedPayment);
+	}
 }
 
 void deposit_settlement_successful_screen(Payment payment)
@@ -1241,73 +1261,63 @@ void settle_deposit_screen(Payment& payment)
 
 void settle_deposit_payments_screen()
 {
-	// clear
-	clear_screen();
-
-	// header
-	print_header("Settle Deposit");
-
-	empty_line();
-
-	// store payments that are allowed to settle deposit
-	vector<Payment*> settlement_payments;
-
-	for (Payment& payment : payments)
-	{
-		// only paid payments
-		if (payment.paymentStatus != "Paid")
-		{
-			continue;
-		}
-
-		// get reservation
-		Reservation* reservation =
-			get_reservation_by_id(payment.reservationID);
-
-		if (reservation == nullptr)
-		{
-			continue;
-		}
-
-		// only reservation ready for checkout/deposit settlement
-		if (reservation->reservationStatus == "Checked-out")
-		{
-			settlement_payments.push_back(&payment);
-		}
-	}
-
-	// no payment available
-	if (settlement_payments.empty())
-	{
-		print_table_row("|No payment available for deposit settlement.");
-
-		empty_line();
-		print_divider_with_space(false);
-
-		cout << "Press any key to continue...";
-		_getch();
-
-		return;
-	}
-
-	// display payments
-	print_payment_table(settlement_payments);
-
-	// ask staff to select payment
-	string paymentID;
-
 	while (true)
 	{
+		clear_screen();
+
+		print_header("Settle Deposit");
+		empty_line();
+
+		vector<Payment*> settlement_payments;
+
+		for (Payment& payment : payments)
+		{
+			if (payment.paymentStatus != "Paid")
+			{
+				continue;
+			}
+
+			Reservation* reservation =
+				get_reservation_by_id(payment.reservationID);
+
+			if (reservation == nullptr)
+			{
+				continue;
+			}
+
+			if (reservation->reservationStatus == "Checked-out")
+			{
+				settlement_payments.push_back(&payment);
+			}
+		}
+
+		if (settlement_payments.empty())
+		{
+			print_table_row(
+				"|No payment available for deposit settlement."
+			);
+
+			empty_line();
+			print_divider_with_space(false);
+
+			cout << "Press any key to continue...";
+			_getch();
+
+			return;
+		}
+
+		print_payment_table(settlement_payments);
+
+		string paymentID;
+
 		cout << "Enter Payment ID to settle deposit [0 to back]: ";
 		cin >> paymentID;
 
-		// back
 		if (paymentID == "0")
 		{
 			return;
 		}
 
-		// uppercase
 		transform(
 			paymentID.begin(),
 			paymentID.end(),
@@ -1315,37 +1325,40 @@ void settle_deposit_payments_screen()
 			::toupper
 		);
 
-		// check format
 		if (!check_payment_id_format(paymentID))
 		{
 			cout << "Payment ID format incorrect..." << endl;
+
+			cout << "Press any key to continue...";
+			_getch();
+
 			continue;
 		}
 
-		// check whether payment is inside settlement list
-		bool found = false;
+		Payment* selectedPayment = nullptr;
 
 		for (Payment* payment : settlement_payments)
 		{
 			if (payment != nullptr &&
 				payment->paymentID == paymentID)
 			{
-				found = true;
-
-				// proceed to settlement screen
-				settle_deposit_screen(*payment);
-
+				selectedPayment = payment;
 				break;
 			}
 		}
 
-		if (!found)
+		if (selectedPayment == nullptr)
 		{
-			cout << "Payment not available for deposit settlement..." << endl;
+			cout << "Payment not available for deposit settlement..."
+				<< endl;
+
+			cout << "Press any key to continue...";
+			_getch();
+
 			continue;
 		}
 
-		return;
+		settle_deposit_screen(*selectedPayment);
 	}
 }
 

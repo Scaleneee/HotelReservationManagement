@@ -71,22 +71,25 @@ void save_customers_to_file() {
 void load_memberships_from_file() {
     ifstream inFile("memberships.txt");
 
-    // if the file can't be opened
     if (!inFile) {
         cout << "Error opening memberships.txt." << endl;
         return;
     }
 
-    // clear the list
     memberships.clear();
 
-    // membership variable to store the data read from the file
     Membership membership;
 
     string points;
     string discountRate;
 
     while (getline(inFile, membership.membershipID, '|')) {
+
+        // skip empty record
+        if (membership.membershipID.empty()) {
+            continue;
+        }
+
         getline(inFile, membership.customerID, '|');
         getline(inFile, membership.level, '|');
         getline(inFile, membership.registerDate, '|');
@@ -95,10 +98,20 @@ void load_memberships_from_file() {
         getline(inFile, discountRate, '|');
         getline(inFile, membership.status);
 
-        membership.points = stoi(points);
-        membership.discountRate = stod(discountRate);
+        try {
+            membership.points = stoi(points);
+            membership.discountRate = stod(discountRate);
 
-        memberships.push_back(membership);
+            memberships.push_back(membership);
+        }
+        catch (const invalid_argument&) {
+            cout << "Invalid numeric data in membership: "
+                << membership.membershipID << endl;
+        }
+        catch (const out_of_range&) {
+            cout << "Numeric value out of range in membership: "
+                << membership.membershipID << endl;
+        }
     }
 
     inFile.close();
@@ -134,16 +147,13 @@ void save_memberships_to_file() {
 void load_payments_from_file() {
     ifstream inFile("payments.txt");
 
-    // if the file can't be opened
     if (!inFile) {
         cout << "Error opening payments.txt." << endl;
         return;
     }
 
-    // clear the list
     payments.clear();
 
-    // payment variable to store the data read from the file
     Payment payment;
 
     string roomFee;
@@ -159,6 +169,12 @@ void load_payments_from_file() {
     string depositRetained;
 
     while (getline(inFile, payment.paymentID, '|')) {
+
+        // skip empty record
+        if (payment.paymentID.empty()) {
+            continue;
+        }
+
         getline(inFile, payment.reservationID, '|');
         getline(inFile, payment.paymentDate, '|');
         getline(inFile, payment.paymentMethod, '|');
@@ -175,19 +191,29 @@ void load_payments_from_file() {
         getline(inFile, depositReturned, '|');
         getline(inFile, depositRetained);
 
-        payment.roomFee = stod(roomFee);
-        payment.membershipDiscount = stod(membershipDiscount);
-        payment.depositAmount = stod(depositAmount);
-        payment.additionalCharge = stod(additionalCharge);
-        payment.damageCharge = stod(damageCharge);
-        payment.totalAmount = stod(totalAmount);
-        payment.amountPaid = stod(amountPaid);
-        payment.change = stod(change);
-        payment.refundAmount = stod(refundAmount);
-        payment.depositReturned = stod(depositReturned);
-        payment.depositRetained = stod(depositRetained);
+        try {
+            payment.roomFee = stod(roomFee);
+            payment.membershipDiscount = stod(membershipDiscount);
+            payment.depositAmount = stod(depositAmount);
+            payment.additionalCharge = stod(additionalCharge);
+            payment.damageCharge = stod(damageCharge);
+            payment.totalAmount = stod(totalAmount);
+            payment.amountPaid = stod(amountPaid);
+            payment.change = stod(change);
+            payment.refundAmount = stod(refundAmount);
+            payment.depositReturned = stod(depositReturned);
+            payment.depositRetained = stod(depositRetained);
 
-        payments.push_back(payment);
+            payments.push_back(payment);
+        }
+        catch (const invalid_argument&) {
+            cout << "Invalid numeric data in payment: "
+                << payment.paymentID << endl;
+        }
+        catch (const out_of_range&) {
+            cout << "Numeric value out of range in payment: "
+                << payment.paymentID << endl;
+        }
     }
 
     inFile.close();
@@ -231,16 +257,13 @@ void save_payments_to_file() {
 void load_reservations_from_file() {
     ifstream inFile("reservations.txt");
 
-    // if the file can't be opened
     if (!inFile) {
         cout << "Error opening reservations.txt." << endl;
         return;
     }
 
-    // clear the list
     reservations.clear();
 
-    // reservation variable to store the data read from the file
     Reservation reservation;
 
     string roomNumber;
@@ -249,6 +272,11 @@ void load_reservations_from_file() {
     string roomPrice;
 
     while (getline(inFile, reservation.reservationID, '|')) {
+
+        if (reservation.reservationID.empty()) {
+            continue;
+        }
+
         getline(inFile, reservation.customerID, '|');
         getline(inFile, roomNumber, '|');
         getline(inFile, reservation.checkInDate, '|');
@@ -261,12 +289,22 @@ void load_reservations_from_file() {
         getline(inFile, reservation.reservationStatus, '|');
         getline(inFile, reservation.cancellationReason);
 
-        reservation.roomNumber = stoi(roomNumber);
-        reservation.numberOfGuests = stoi(numberOfGuests);
-        reservation.numberOfNights = stoi(numberOfNights);
-        reservation.roomPrice = stod(roomPrice);
+        try {
+            reservation.roomNumber = stoi(roomNumber);
+            reservation.numberOfGuests = stoi(numberOfGuests);
+            reservation.numberOfNights = stoi(numberOfNights);
+            reservation.roomPrice = stod(roomPrice);
 
-        reservations.push_back(reservation);
+            reservations.push_back(reservation);
+        }
+        catch (const invalid_argument&) {
+            cout << "Invalid numeric data in reservation: "
+                << reservation.reservationID << endl;
+        }
+        catch (const out_of_range&) {
+            cout << "Numeric value out of range in reservation: "
+                << reservation.reservationID << endl;
+        }
     }
 
     inFile.close();
@@ -306,16 +344,13 @@ void save_reservations_to_file() {
 void load_rooms_from_file() {
     ifstream inFile("rooms.txt");
 
-    // if the file can't be opened
     if (!inFile) {
         cout << "Error opening rooms.txt." << endl;
         return;
     }
 
-    // clear the list
     rooms.clear();
 
-    // room variable to store the data read from the file
     Room room;
 
     string roomNumber;
@@ -323,17 +358,30 @@ void load_rooms_from_file() {
     string pricePerNight;
 
     while (getline(inFile, roomNumber, '|')) {
+
+        if (roomNumber.empty()) {
+            continue;
+        }
+
         getline(inFile, room.roomType, '|');
         getline(inFile, room.description, '|');
         getline(inFile, capacity, '|');
         getline(inFile, pricePerNight, '|');
         getline(inFile, room.roomStatus);
 
-        room.roomNumber = stoi(roomNumber);
-        room.capacity = stoi(capacity);
-        room.pricePerNight = stod(pricePerNight);
+        try {
+            room.roomNumber = stoi(roomNumber);
+            room.capacity = stoi(capacity);
+            room.pricePerNight = stod(pricePerNight);
 
-        rooms.push_back(room);
+            rooms.push_back(room);
+        }
+        catch (const invalid_argument&) {
+            cout << "Invalid numeric data in room record." << endl;
+        }
+        catch (const out_of_range&) {
+            cout << "Numeric value out of range in room record." << endl;
+        }
     }
 
     inFile.close();
@@ -364,9 +412,15 @@ void save_rooms_to_file() {
     Load all data from the file to the list
 */
 void load_all_data_from_file() {
-    load_customers_from_file();
-    load_memberships_from_file();
-    load_payments_from_file();
-    load_reservations_from_file();
-    load_rooms_from_file();
+    try {
+        load_customers_from_file();
+        load_memberships_from_file();
+        load_payments_from_file();
+        load_reservations_from_file();
+        load_rooms_from_file();
+    }
+    catch (const exception& e) {
+        cout << "Unexpected error while loading data: "
+            << e.what() << endl;
+    }
 }
