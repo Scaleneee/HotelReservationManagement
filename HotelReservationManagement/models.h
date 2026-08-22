@@ -5,6 +5,7 @@
 using namespace std;
 
 const double DEPOSIT_RATE = 0.20;
+const int POINTS_PER_RM = 50;
 
 struct Customer {
     string customerID;

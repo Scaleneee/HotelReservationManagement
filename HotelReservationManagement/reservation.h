@@ -5,9 +5,17 @@
 #include <sstream>
 #include <vector>
 #include "models.h"
+#include "payment.h"
 #include "ui.h"
 
 using namespace std;
+
+/*
+	return deposit
+*/
+double calculate_deposit(double roomFee) {
+	return roomFee * DEPOSIT_RATE;
+}
 
 void create_unpaid_payment(const Reservation& reservation)
 {

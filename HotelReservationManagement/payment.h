@@ -19,13 +19,6 @@ using namespace std;
 
 // --------------- LOGIC FUNCTIONS ---------------
 /*
-	return deposit
-*/
-double calculate_deposit(double roomFee) {
-	return roomFee * DEPOSIT_RATE;
-}
-
-/*
 	return the total amount of the payment
 */
 double calculate_total_amount(
@@ -163,6 +156,51 @@ vector<Payment*> get_payments_by_customer_name(string customerName) {
 	return matchedPayments;
 }
 
+Membership* get_membership_by_customer_id(string customerID)
+{
+	for (Membership& membership : memberships)
+	{
+		if (membership.customerID == customerID &&
+			membership.status == "Active")
+		{
+			return &membership;
+		}
+	}
+
+	return nullptr;
+}
+
+void add_membership_points(Payment& payment)
+{
+	Reservation* reservation =
+		get_reservation_by_id(payment.reservationID);
+
+	if (reservation == nullptr)
+	{
+		return;
+	}
+
+	Membership* membership =
+		get_membership_by_customer_id(
+			reservation->customerID
+		);
+
+	if (membership == nullptr)
+	{
+		return;
+	}
+
+	// RM10 room spending = 1 point
+	int earnedPoints =
+		static_cast<int>(
+			(payment.roomFee - payment.membershipDiscount) / 10
+			);
+
+	membership->points += earnedPoints;
+
+	save_memberships_to_file();
+}
+
 // --------------- UI MENU FUNCTIONS ---------------
 void print_invoice(Payment payment) {
 	Reservation reservation = *get_reservation_by_id(payment.reservationID);
@@ -243,8 +281,8 @@ void print_receipt(Payment payment) {
 	empty_line();
 
 	print_table_row(format("|{:<23}: {}", "Payment Method", payment.paymentMethod));
-	print_table_row(format("|{:<23}: {}", "Amount Paid", payment.amountPaid));
-	print_table_row(format("|{:<23}: {}", "Change", payment.change));
+	print_table_row(format("|{:<23}: RM{:>9.2f}", "Amount Paid", payment.amountPaid));
+	print_table_row(format("|{:<23}: RM{:>9.2f}", "Change", payment.change));
 	print_table_row(format("|{:<23}: {}", "Payment Date", payment.paymentDate));
 	print_table_row(format("|{:<23}: {}", "Payment Status", payment.paymentStatus));
 
@@ -266,85 +304,308 @@ void payment_successful(Payment payment) {
 	_getch();
 }
 
-void confirm_payment_screen(Payment& payment, string payment_method) {
-	// clear
+int get_points_to_redeem(
+	Membership& membership,
+	double maxDiscount
+)
+{
+	if (membership.points <= 0)
+	{
+		cout << "No membership points available." << endl;
+		return 0;
+	}
+
+	cout << endl;
+	cout << "Membership Points Available : "
+		<< membership.points << endl;
+
+	cout << endl;
+	cout << "Use membership points?" << endl;
+	cout << "  [1] Yes" << endl;
+	cout << "  [0] No" << endl;
+	cout << endl;
+
+	int choice = get_menu_choice(1);
+
+	if (choice == 0)
+	{
+		return 0;
+	}
+
+	int pointsToUse;
+
+	while (true)
+	{
+		cout << "Enter points to redeem [0 to cancel]: ";
+		cin >> pointsToUse;
+
+		if (cin.fail())
+		{
+			cin.clear();
+			cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+			cout << "Invalid input. Please enter a number."
+				<< endl;
+
+			continue;
+		}
+
+		cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+		// cancel point redemption
+		if (pointsToUse == 0)
+		{
+			return 0;
+		}
+
+		if (pointsToUse < 0)
+		{
+			cout << "Points cannot be negative." << endl;
+			continue;
+		}
+
+		if (pointsToUse > membership.points)
+		{
+			cout << "Insufficient membership points." << endl;
+			continue;
+		}
+
+		// calculate point discount
+		double pointDiscount =
+			static_cast<double>(pointsToUse) / POINTS_PER_RM;
+
+		// don't allow discount to exceed allowed amount
+		if (pointDiscount > maxDiscount)
+		{
+			cout << "Too many points selected." << endl;
+			continue;
+		}
+
+		return pointsToUse;
+	}
+}
+
+void confirm_payment_screen(
+	Payment& payment,
+	string payment_method
+)
+{
 	clear_screen();
 
-	// display header
 	print_header("Process Payment");
 	empty_line();
 
-	// display payment method
-	print_table_row(format("{:<20}: {}", "|Payment Method", payment_method));
+	// find reservation
+	Reservation* reservation =
+		get_reservation_by_id(payment.reservationID);
 
-	// display total amount
-	print_table_row(format("{:<20}: RM{:>9.2f}", "|Total Amount", payment.totalAmount));
+	Membership* membership = nullptr;
+
+	if (reservation != nullptr)
+	{
+		membership =
+			get_membership_by_customer_id(
+				reservation->customerID
+			);
+	}
+
+	// -----------------------------
+	// POINT REDEMPTION
+	// -----------------------------
+
+	int pointsToUse = 0;
+	double pointDiscount = 0.0;
+
+	// start with original payment total
+	double finalTotalAmount = payment.totalAmount;
+
+	if (membership != nullptr)
+	{
+		print_table_row(
+			format(
+				"{:<23}: {}",
+				"|Membership Level",
+				membership->level
+			)
+		);
+
+		print_table_row(
+			format(
+				"{:<23}: {}",
+				"|Available Points",
+				membership->points
+			)
+		);
+
+		empty_line();
+		print_divider_with_space(false);
+
+		// point discount should not exceed room charge
+		double maxDiscount =
+			payment.roomFee
+			- payment.membershipDiscount;
+
+		pointsToUse =
+			get_points_to_redeem(
+				*membership,
+				maxDiscount
+			);
+
+		if (pointsToUse > 0)
+		{
+			pointDiscount =
+				static_cast<double>(pointsToUse)
+				/ POINTS_PER_RM;
+
+			finalTotalAmount -= pointDiscount;
+		}
+	}
+
+	// -----------------------------
+	// DISPLAY PAYMENT INFO
+	// -----------------------------
+
+	clear_screen();
+
+	print_header("Process Payment");
+	empty_line();
+
+	print_table_row(
+		format(
+			"{:<23}: {}",
+			"|Payment Method",
+			payment_method
+		)
+	);
+
+	print_table_row(
+		format(
+			"{:<23}: RM{:>9.2f}",
+			"|Original Amount",
+			payment.totalAmount
+		)
+	);
+
+	if (pointDiscount > 0)
+	{
+		print_table_row(
+			format(
+				"{:<23}: {} points",
+				"|Points Redeemed",
+				pointsToUse
+			)
+		);
+
+		print_table_row(
+			format(
+				"{:<23}: RM{:>9.2f} (-)",
+				"|Point Discount",
+				pointDiscount
+			)
+		);
+	}
+
+	print_divider();
+
+	print_table_row(
+		format(
+			"{:<23}: RM{:>9.2f}",
+			"|Final Amount",
+			finalTotalAmount
+		)
+	);
+
+	empty_line();
+	print_divider_with_space(false);
+
+	// -----------------------------
+	// GET AMOUNT PAID
+	// -----------------------------
 
 	double amount_paid;
-	double changes;
 
 	if (payment_method == "Cash")
 	{
-		// promt user enter the amount paid
-		// if the payment method = cash only ask to enter the amount paid
-		// all validation checking inside this function
-		amount_paid = get_amount_paid(payment.totalAmount);
-		// clear line
-		cout << "\033[1A"; // move cursor up 1 line
-		cout << "\r\033[2K"; // clear entire line
+		amount_paid =
+			get_amount_paid(finalTotalAmount);
 	}
 	else
 	{
-		amount_paid = payment.totalAmount;
+		amount_paid = finalTotalAmount;
 	}
 
-	print_table_row(format("{:<20}: RM{:>9.2f}", "|Amount Paid", amount_paid));
+	double changes =
+		amount_paid - finalTotalAmount;
 
-	// calculate and display changes
-	changes = amount_paid - payment.totalAmount;
-	
-	print_table_row(format("{:<20}: RM{:>9.2f}", "|Changes", changes));
+	empty_line();
 
+	print_table_row(
+		format(
+			"{:<23}: RM{:>9.2f}",
+			"|Amount Paid",
+			amount_paid
+		)
+	);
+
+	print_table_row(
+		format(
+			"{:<23}: RM{:>9.2f}",
+			"|Change",
+			changes
+		)
+	);
+
+	empty_line();
 	print_divider_with_space(false);
 
-	// confirm payment
-	cout << "Confirm Payment? " << endl;
-	cout << endl;
+	// -----------------------------
+	// CONFIRM
+	// -----------------------------
 
-	int choice;
+	cout << "Confirm Payment?" << endl;
+	cout << endl;
 
 	cout << "  [1] Confirm" << endl;
 	cout << "  [0] Cancel" << endl;
 	cout << endl;
 
-	choice = get_menu_choice(1);
-	
-	if (choice == 1)
-	{
-		// confirm payment
-		
-		// set the payment method
-		payment.paymentMethod = payment_method;
-		// set the amount paid value
-		payment.amountPaid = amount_paid;
-		// set the changes value
-		payment.change = changes;
-		// change the payment status to "Paid"
-		payment.paymentStatus = "Paid";
-		// set the payment date to today date
-		payment.paymentDate = get_today_date();
+	int choice = get_menu_choice(1);
 
-		// update this all to file
-		save_payments_to_file();
-
-		// payment successful
-		payment_successful(payment);
-	}
-	else
+	if (choice == 0)
 	{
-		// cancelled
+		// IMPORTANT:
+		// points have not been deducted yet
 		return;
 	}
+
+	// -----------------------------
+	// PAYMENT CONFIRMED
+	// -----------------------------
+
+	payment.paymentMethod = payment_method;
+	payment.amountPaid = amount_paid;
+	payment.change = changes;
+	payment.paymentStatus = "Paid";
+	payment.paymentDate = get_today_date();
+
+	// add point redemption discount
+	payment.membershipDiscount += pointDiscount;
+
+	// update final amount
+	payment.totalAmount = finalTotalAmount;
+
+	// NOW deduct points
+	if (membership != nullptr &&
+		pointsToUse > 0)
+	{
+		membership->points -= pointsToUse;
+
+		save_memberships_to_file();
+	}
+
+	save_payments_to_file();
+
+	payment_successful(payment);
 }
 
 void process_payment_screen(Payment& payment)
