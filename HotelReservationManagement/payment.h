@@ -17,6 +17,28 @@
 
 using namespace std;
 
+// for daily report
+const int DAILY_REPORT_ROWS = 4;
+const int DAILY_REPORT_COLS = 2;
+
+const int ROW_COLLECTED = 0;
+const int ROW_REFUND = 1;
+const int ROW_DEPOSIT_RETURNED = 2;
+const int ROW_DEPOSIT_RETAINED = 3;
+
+const int COL_COUNT = 0;
+const int COL_AMOUNT = 1;
+
+// yearly report
+const int YEARLY_REPORT_MONTHS = 12;
+
+const int YEAR_COLLECTED = 0;
+const int YEAR_REFUND = 1;
+const int YEAR_DEPOSIT_RETURNED = 2;
+const int YEAR_DEPOSIT_RETAINED = 3;
+
+const int YEARLY_REPORT_COLS = 4;
+
 // --------------- LOGIC FUNCTIONS ---------------
 /*
 	return the total amount of the payment
@@ -126,6 +148,36 @@ string get_today_date() {
 		<< localTime.tm_year + 1900;
 
 	return ss.str();
+}
+
+bool get_month_year_from_date(
+	const string& date,
+	int& month,
+	int& year
+)
+{
+	// payment date may be empty for unpaid payment
+	if (date.empty())
+	{
+		return false;
+	}
+
+	int day;
+	char slash1;
+	char slash2;
+
+	stringstream ss(date);
+
+	ss >> day >> slash1 >> month >> slash2 >> year;
+
+	if (ss.fail() ||
+		slash1 != '/' ||
+		slash2 != '/')
+	{
+		return false;
+	}
+
+	return true;
 }
 
 vector<Payment*> get_payments_by_customer_name(string customerName) {
@@ -1451,9 +1503,11 @@ void settle_deposit_screen(Payment& payment)
 			payment.depositAmount - totalDeduction;
 	}
 
-	empty_line();
+	clear_screen();
 
 	// display charges
+	print_header("Confirm Deposit Settlement");
+	empty_line();
 	print_table_row(
 		format("{:<23}: RM{:>9.2f}",
 			"|Damage Charge",
@@ -1488,13 +1542,10 @@ void settle_deposit_screen(Payment& payment)
 	// confirm settlement
 	cout << "Confirm Deposit Settlement?" << endl;
 
-	empty_line();
-
-	print_table_row("|  [1] Confirm");
-	print_table_row("|  [0] Back");
-
-	empty_line();
-	print_divider_with_space(false);
+	cout << endl;
+	cout << "  [1] Confirm" << endl;
+	cout << "  [0] Back" << endl;
+	cout << endl;
 
 	int choice = get_menu_choice(1);
 
@@ -1531,13 +1582,16 @@ void settle_deposit_payments_screen()
 
 		vector<Payment*> settlement_payments;
 
+		// get all payments eligible for deposit settlement
 		for (Payment& payment : payments)
 		{
+			// only paid payments
 			if (payment.paymentStatus != "Paid")
 			{
 				continue;
 			}
 
+			// get reservation
 			Reservation* reservation =
 				get_reservation_by_id(payment.reservationID);
 
@@ -1546,12 +1600,14 @@ void settle_deposit_payments_screen()
 				continue;
 			}
 
+			// only checked-out reservations
 			if (reservation->reservationStatus == "Checked-out")
 			{
 				settlement_payments.push_back(&payment);
 			}
 		}
 
+		// no eligible payment
 		if (settlement_payments.empty())
 		{
 			print_table_row(
@@ -1567,28 +1623,32 @@ void settle_deposit_payments_screen()
 			return;
 		}
 
+		// display eligible payments
 		print_payment_table(settlement_payments);
 
-		string paymentID;
+		string reservationID;
 
-		cout << "Enter Payment ID to settle deposit [0 to back]: ";
-		cin >> paymentID;
+		cout << "Enter Reservation ID to settle deposit [0 to back]: ";
+		cin >> reservationID;
 
-		if (paymentID == "0")
+		// back
+		if (reservationID == "0")
 		{
 			return;
 		}
 
+		// convert to uppercase
 		transform(
-			paymentID.begin(),
-			paymentID.end(),
-			paymentID.begin(),
+			reservationID.begin(),
+			reservationID.end(),
+			reservationID.begin(),
 			::toupper
 		);
 
-		if (!check_payment_id_format(paymentID))
+		// validate reservation ID format
+		if (!check_reservation_id_format(reservationID))
 		{
-			cout << "Payment ID format incorrect..." << endl;
+			cout << "Reservation ID format incorrect..." << endl;
 
 			cout << "Press any key to continue...";
 			_getch();
@@ -1598,19 +1658,21 @@ void settle_deposit_payments_screen()
 
 		Payment* selectedPayment = nullptr;
 
+		// search only inside eligible settlement payments
 		for (Payment* payment : settlement_payments)
 		{
 			if (payment != nullptr &&
-				payment->paymentID == paymentID)
+				payment->reservationID == reservationID)
 			{
 				selectedPayment = payment;
 				break;
 			}
 		}
 
+		// reservation does not have an eligible payment
 		if (selectedPayment == nullptr)
 		{
-			cout << "Payment not available for deposit settlement..."
+			cout << "Reservation not available for deposit settlement..."
 				<< endl;
 
 			cout << "Press any key to continue...";
@@ -1619,8 +1681,834 @@ void settle_deposit_payments_screen()
 			continue;
 		}
 
+		// proceed to deposit settlement
 		settle_deposit_screen(*selectedPayment);
 	}
+}
+
+void generate_yearly_report()
+{
+	clear_screen();
+
+	print_header("Yearly Payment Report");
+	empty_line();
+
+	int reportYear;
+
+	 
+	// GET YEAR
+	 
+
+	while (true)
+	{
+		cout << "Enter Year [0 to back]: ";
+		cin >> reportYear;
+
+		if (cin.fail())
+		{
+			cin.clear();
+			cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+			cout << "Invalid year." << endl;
+
+			continue;
+		}
+
+		cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+		// back
+		if (reportYear == 0)
+		{
+			return;
+		}
+
+		if (reportYear < 2000)
+		{
+			cout << "Invalid year." << endl;
+			continue;
+		}
+
+		break;
+	}
+
+	 
+	// 2D ARRAY
+	 
+
+	double yearlyReport
+		[YEARLY_REPORT_MONTHS]
+		[YEARLY_REPORT_COLS] = {};
+
+	// process every payment
+	for (Payment& payment : payments)
+	{
+		int paymentMonth;
+		int paymentYear;
+
+		if (!get_month_year_from_date(
+			payment.paymentDate,
+			paymentMonth,
+			paymentYear))
+		{
+			continue;
+		}
+
+		// only selected year
+		if (paymentYear != reportYear)
+		{
+			continue;
+		}
+
+		// array starts from 0
+		// January = 0
+		// February = 1
+		// ...
+		int monthIndex = paymentMonth - 1;
+
+		 
+		// COLLECTED
+		 
+
+		if (payment.paymentStatus == "Paid" ||
+			payment.paymentStatus == "Completed" ||
+			payment.paymentStatus == "Refunded")
+		{
+			yearlyReport
+				[monthIndex]
+				[YEAR_COLLECTED]
+				+= payment.amountPaid;
+		}
+
+		 
+		// REFUND
+		 
+
+		if (payment.paymentStatus == "Refunded")
+		{
+			yearlyReport
+				[monthIndex]
+				[YEAR_REFUND]
+				+= payment.refundAmount;
+		}
+
+		 
+		// DEPOSIT SETTLEMENT
+		 
+
+		if (payment.paymentStatus == "Completed")
+		{
+			yearlyReport
+				[monthIndex]
+				[YEAR_DEPOSIT_RETURNED]
+				+= payment.depositReturned;
+
+			yearlyReport
+				[monthIndex]
+				[YEAR_DEPOSIT_RETAINED]
+				+= payment.depositRetained;
+		}
+	}
+
+	string monthNames[12] =
+	{
+		"January",
+		"February",
+		"March",
+		"April",
+		"May",
+		"June",
+		"July",
+		"August",
+		"September",
+		"October",
+		"November",
+		"December"
+	};
+
+	double yearlyCollected = 0.0;
+	double yearlyRefund = 0.0;
+	double yearlyDepositReturned = 0.0;
+	double yearlyDepositRetained = 0.0;
+
+	clear_screen();
+
+	print_header(
+		"Yearly Payment Report - " +
+		to_string(reportYear)
+	);
+
+	empty_line();
+
+	// table header
+	print_table_row(
+		format(
+			"|{:<12}{:<15}{:<13}{:<15}{:<15}",
+			"Month",
+			"Collected",
+			"Refund",
+			"Returned",
+			"Retained"
+		)
+	);
+
+	print_divider();
+
+	 
+	// DISPLAY 12 MONTHS
+	 
+
+	for (int month = 0;
+		month < YEARLY_REPORT_MONTHS;
+		month++)
+	{
+		double collected =
+			yearlyReport[month][YEAR_COLLECTED];
+
+		double refund =
+			yearlyReport[month][YEAR_REFUND];
+
+		double returned =
+			yearlyReport[month][YEAR_DEPOSIT_RETURNED];
+
+		double retained =
+			yearlyReport[month][YEAR_DEPOSIT_RETAINED];
+
+		print_table_row(
+			format(
+				"|{:<12}RM{:<13.2f}RM{:<11.2f}RM{:<13.2f}RM{:<13.2f}",
+				monthNames[month],
+				collected,
+				refund,
+				returned,
+				retained
+			)
+		);
+
+		// yearly totals
+		yearlyCollected += collected;
+		yearlyRefund += refund;
+		yearlyDepositReturned += returned;
+		yearlyDepositRetained += retained;
+	}
+
+	print_divider();
+	empty_line();
+
+	double yearlyNet =
+		yearlyCollected
+		- yearlyRefund
+		- yearlyDepositReturned;
+
+	print_table_row(
+		format(
+			"{:<27}: RM{:>10.2f}",
+			"|Total Collected",
+			yearlyCollected
+		)
+	);
+
+	print_table_row(
+		format(
+			"{:<27}: RM{:>10.2f}",
+			"|Total Refund",
+			yearlyRefund
+		)
+	);
+
+	print_table_row(
+		format(
+			"{:<27}: RM{:>10.2f}",
+			"|Deposit Returned",
+			yearlyDepositReturned
+		)
+	);
+
+	print_table_row(
+		format(
+			"{:<27}: RM{:>10.2f}",
+			"|Deposit Retained",
+			yearlyDepositRetained
+		)
+	);
+
+	print_divider();
+
+	print_table_row(
+		format(
+			"{:<27}: RM{:>10.2f}",
+			"|Net Amount",
+			yearlyNet
+		)
+	);
+
+	empty_line();
+
+	print_divider_with_space(false);
+
+	cout << "Press any key to continue...";
+	_getch();
+}
+
+void generate_monthly_report()
+{
+	clear_screen();
+
+	print_header("Monthly Payment Report");
+	empty_line();
+
+	int reportMonth;
+	int reportYear;
+
+	// GET MONTH
+	while (true)
+	{
+		cout << "Enter Month [1 - 12] [0 to back]: ";
+		cin >> reportMonth;
+
+		if (cin.fail())
+		{
+			cin.clear();
+			cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+			cout << "Invalid input. Please enter a number."
+				<< endl;
+
+			continue;
+		}
+
+		cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+		// back
+		if (reportMonth == 0)
+		{
+			return;
+		}
+
+		if (reportMonth < 1 || reportMonth > 12)
+		{
+			cout << "Month must be between 1 and 12."
+				<< endl;
+
+			continue;
+		}
+
+		break;
+	}
+
+	// GET YEAR
+	while (true)
+	{
+		cout << "Enter Year: ";
+		cin >> reportYear;
+
+		if (cin.fail())
+		{
+			cin.clear();
+			cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+			cout << "Invalid year." << endl;
+			continue;
+		}
+
+		cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+		if (reportYear < 2000)
+		{
+			cout << "Invalid year." << endl;
+			continue;
+		}
+
+		break;
+	}
+
+	// 2D ARRAY
+
+	double monthlyReport
+		[DAILY_REPORT_ROWS]
+		[DAILY_REPORT_COLS] = {};
+
+	// process payment records
+	for (Payment& payment : payments)
+	{
+		int paymentMonth;
+		int paymentYear;
+
+		// skip payment without valid payment date
+		if (!get_month_year_from_date(
+			payment.paymentDate,
+			paymentMonth,
+			paymentYear))
+		{
+			continue;
+		}
+
+		// only selected month and year
+		if (paymentMonth != reportMonth ||
+			paymentYear != reportYear)
+		{
+			continue;
+		}
+
+		// PAYMENT COLLECTED
+		if (payment.paymentStatus == "Paid" ||
+			payment.paymentStatus == "Completed" ||
+			payment.paymentStatus == "Refunded")
+		{
+			monthlyReport
+				[ROW_COLLECTED]
+				[COL_COUNT]++;
+
+			monthlyReport
+				[ROW_COLLECTED]
+				[COL_AMOUNT]
+				+= payment.amountPaid;
+		}
+
+		// REFUND
+		if (payment.paymentStatus == "Refunded")
+		{
+			monthlyReport
+				[ROW_REFUND]
+				[COL_COUNT]++;
+
+			monthlyReport
+				[ROW_REFUND]
+				[COL_AMOUNT]
+				+= payment.refundAmount;
+		}
+
+		// DEPOSIT SETTLEMENT
+		if (payment.paymentStatus == "Completed")
+		{
+			if (payment.depositReturned > 0)
+			{
+				monthlyReport
+					[ROW_DEPOSIT_RETURNED]
+					[COL_COUNT]++;
+
+				monthlyReport
+					[ROW_DEPOSIT_RETURNED]
+					[COL_AMOUNT]
+					+= payment.depositReturned;
+			}
+
+			if (payment.depositRetained > 0)
+			{
+				monthlyReport
+					[ROW_DEPOSIT_RETAINED]
+					[COL_COUNT]++;
+
+				monthlyReport
+					[ROW_DEPOSIT_RETAINED]
+					[COL_AMOUNT]
+					+= payment.depositRetained;
+			}
+		}
+	}
+
+	// TOTAL
+	double totalCollected =
+		monthlyReport[ROW_COLLECTED][COL_AMOUNT];
+
+	double totalRefund =
+		monthlyReport[ROW_REFUND][COL_AMOUNT];
+
+	double totalDepositReturned =
+		monthlyReport[ROW_DEPOSIT_RETURNED][COL_AMOUNT];
+
+	double totalDepositRetained =
+		monthlyReport[ROW_DEPOSIT_RETAINED][COL_AMOUNT];
+
+	double netAmount =
+		totalCollected
+		- totalRefund
+		- totalDepositReturned;
+
+	// DISPLAY
+	clear_screen();
+
+	print_header("Monthly Payment Report");
+	empty_line();
+
+	print_table_row(
+		format(
+			"{:<23}: {:02}/{}",
+			"|Report Month",
+			reportMonth,
+			reportYear
+		)
+	);
+
+	empty_line();
+	print_divider();
+
+	print_table_row(
+		format(
+			"|{:<27}{:<15}{:<20}",
+			"Category",
+			"Transactions",
+			"Amount"
+		)
+	);
+
+	print_divider();
+
+	print_table_row(
+		format(
+			"|{:<27}{:<15.0f}RM{:>10.2f}",
+			"Payment Collected",
+			monthlyReport[ROW_COLLECTED][COL_COUNT],
+			monthlyReport[ROW_COLLECTED][COL_AMOUNT]
+		)
+	);
+
+	print_table_row(
+		format(
+			"|{:<27}{:<15.0f}RM{:>10.2f}",
+			"Refund",
+			monthlyReport[ROW_REFUND][COL_COUNT],
+			monthlyReport[ROW_REFUND][COL_AMOUNT]
+		)
+	);
+
+	print_table_row(
+		format(
+			"|{:<27}{:<15.0f}RM{:>10.2f}",
+			"Deposit Returned",
+			monthlyReport[ROW_DEPOSIT_RETURNED][COL_COUNT],
+			monthlyReport[ROW_DEPOSIT_RETURNED][COL_AMOUNT]
+		)
+	);
+
+	print_table_row(
+		format(
+			"|{:<27}{:<15.0f}RM{:>10.2f}",
+			"Deposit Retained",
+			monthlyReport[ROW_DEPOSIT_RETAINED][COL_COUNT],
+			monthlyReport[ROW_DEPOSIT_RETAINED][COL_AMOUNT]
+		)
+	);
+
+	print_divider();
+	empty_line();
+
+	print_table_row(
+		format(
+			"{:<27}: RM{:>10.2f}",
+			"|Total Collected",
+			totalCollected
+		)
+	);
+
+	print_table_row(
+		format(
+			"{:<27}: RM{:>10.2f} (-)",
+			"|Total Refund",
+			totalRefund
+		)
+	);
+
+	print_table_row(
+		format(
+			"{:<27}: RM{:>10.2f} (-)",
+			"|Deposit Returned",
+			totalDepositReturned
+		)
+	);
+
+	print_table_row(
+		format(
+			"{:<27}: RM{:>10.2f}",
+			"|Deposit Retained",
+			totalDepositRetained
+		)
+	);
+
+	print_divider();
+
+	print_table_row(
+		format(
+			"{:<27}: RM{:>10.2f}",
+			"|Net Amount",
+			netAmount
+		)
+	);
+
+	empty_line();
+
+	print_divider_with_space(false);
+
+	cout << "Press any key to continue...";
+	_getch();
+}
+
+void generate_daily_report()
+{
+	clear_screen();
+
+	print_header("Daily Payment Report");
+	empty_line();
+
+	string reportDate;
+
+	// ask report date
+	while (true)
+	{
+		cout << "Enter Report Date (DD/MM/YYYY) [0 to back]: ";
+		getline(cin, reportDate);
+
+		// back
+		if (reportDate == "0")
+		{
+			return;
+		}
+
+		// validate date format
+		if (!DateFormat(reportDate))
+		{
+			cout << "Invalid date format. Please use DD/MM/YYYY."
+				<< endl;
+
+			continue;
+		}
+
+		break;
+	}
+
+	// 2D ARRAY
+	//
+	// Column 0 = number of transactions
+	// Column 1 = total amount
+	//
+	// Row 0 = collected payment
+	// Row 1 = refund
+	// Row 2 = deposit returned
+	// Row 3 = deposit retained
+
+	double dailyReport[DAILY_REPORT_ROWS][DAILY_REPORT_COLS] = {};
+
+	// process all payment records
+	for (Payment& payment : payments)
+	{
+		// only process payment records belonging to selected date
+		if (payment.paymentDate != reportDate)
+		{
+			continue;
+		}
+
+		// --------------------------
+		// PAYMENT COLLECTED
+		// --------------------------
+
+		if (payment.paymentStatus == "Paid" ||
+			payment.paymentStatus == "Completed" ||
+			payment.paymentStatus == "Refunded")
+		{
+			// increase transaction count
+			dailyReport[ROW_COLLECTED][COL_COUNT]++;
+
+			// add amount collected
+			dailyReport[ROW_COLLECTED][COL_AMOUNT]
+				+= payment.amountPaid;
+		}
+
+		// --------------------------
+		// REFUND
+		// --------------------------
+
+		if (payment.paymentStatus == "Refunded")
+		{
+			dailyReport[ROW_REFUND][COL_COUNT]++;
+
+			dailyReport[ROW_REFUND][COL_AMOUNT]
+				+= payment.refundAmount;
+		}
+
+		// --------------------------
+		// DEPOSIT SETTLEMENT
+		// --------------------------
+
+		if (payment.paymentStatus == "Completed")
+		{
+			if (payment.depositReturned > 0)
+			{
+				dailyReport[ROW_DEPOSIT_RETURNED][COL_COUNT]++;
+
+				dailyReport[ROW_DEPOSIT_RETURNED][COL_AMOUNT]
+					+= payment.depositReturned;
+			}
+
+			if (payment.depositRetained > 0)
+			{
+				dailyReport[ROW_DEPOSIT_RETAINED][COL_COUNT]++;
+
+				dailyReport[ROW_DEPOSIT_RETAINED][COL_AMOUNT]
+					+= payment.depositRetained;
+			}
+		}
+	}
+
+	// calculate totals
+	double totalCollected =
+		dailyReport[ROW_COLLECTED][COL_AMOUNT];
+
+	double totalRefund =
+		dailyReport[ROW_REFUND][COL_AMOUNT];
+
+	double depositReturned =
+		dailyReport[ROW_DEPOSIT_RETURNED][COL_AMOUNT];
+
+	double depositRetained =
+		dailyReport[ROW_DEPOSIT_RETAINED][COL_AMOUNT];
+
+	double netAmount =
+		totalCollected
+		- totalRefund
+		- depositReturned;
+
+	// display report
+	clear_screen();
+
+	print_header("Daily Payment Report");
+
+	empty_line();
+
+	print_table_row(
+		format("{:<23}: {}",
+			"|Report Date",
+			reportDate)
+	);
+
+	empty_line();
+
+	print_divider();
+
+	// table header
+	print_table_row(
+		format("|{:<27}{:<15}{:<20}",
+			"Category",
+			"Transactions",
+			"Amount")
+	);
+
+	print_divider();
+
+	// payment collected
+	print_table_row(
+		format("|{:<27}{:<15.0f}RM{:>10.2f}",
+			"Payment Collected",
+			dailyReport[ROW_COLLECTED][COL_COUNT],
+			dailyReport[ROW_COLLECTED][COL_AMOUNT])
+	);
+
+	// refund
+	print_table_row(
+		format("|{:<27}{:<15.0f}RM{:>10.2f}",
+			"Refund",
+			dailyReport[ROW_REFUND][COL_COUNT],
+			dailyReport[ROW_REFUND][COL_AMOUNT])
+	);
+
+	// deposit returned
+	print_table_row(
+		format("|{:<27}{:<15.0f}RM{:>10.2f}",
+			"Deposit Returned",
+			dailyReport[ROW_DEPOSIT_RETURNED][COL_COUNT],
+			dailyReport[ROW_DEPOSIT_RETURNED][COL_AMOUNT])
+	);
+
+	// deposit retained
+	print_table_row(
+		format("|{:<27}{:<15.0f}RM{:>10.2f}",
+			"Deposit Retained",
+			dailyReport[ROW_DEPOSIT_RETAINED][COL_COUNT],
+			dailyReport[ROW_DEPOSIT_RETAINED][COL_AMOUNT])
+	);
+
+	print_divider();
+
+	empty_line();
+
+	// totals
+	print_table_row(
+		format("{:<27}: RM{:>10.2f}",
+			"|Total Collected",
+			totalCollected)
+	);
+
+	print_table_row(
+		format("{:<27}: RM{:>10.2f} (-)",
+			"|Total Refund",
+			totalRefund)
+	);
+
+	print_table_row(
+		format("{:<27}: RM{:>10.2f} (-)",
+			"|Deposit Returned",
+			depositReturned)
+	);
+
+	print_divider();
+
+	print_table_row(
+		format("{:<27}: RM{:>10.2f}",
+			"|Net Amount",
+			netAmount)
+	);
+
+	empty_line();
+
+	print_divider_with_space(false);
+
+	cout << "Press any key to continue...";
+	_getch();
+}
+
+void generate_report_menu()
+{
+	int choice;
+
+	do
+	{
+		clear_screen();
+
+		print_header("Generate Report");
+
+		empty_line();
+
+		print_table_row("|  [1] Daily Report");
+		print_table_row("|  [2] Monthly Report");
+		print_table_row("|  [3] Yearly Report");
+
+		empty_line();
+
+		print_table_row("|  [0] Back");
+
+		empty_line();
+
+		print_divider_with_space(false);
+
+		choice = get_menu_choice(3);
+
+		switch (choice)
+		{
+		case 1:
+			generate_daily_report();
+			break;
+
+		case 2:
+			 generate_monthly_report();
+			break;
+
+		case 3:
+			 generate_yearly_report();
+			break;
+
+		default:
+			return;
+		}
+
+	} while (choice != 0);
 }
 
 void payment_menu() {
@@ -1668,6 +2556,7 @@ void payment_menu() {
 			break;
 		case 5:
 			// generate report
+			generate_report_menu();
 			break;
 		default:
 			// means the choice = 0, back

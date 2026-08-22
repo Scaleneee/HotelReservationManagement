@@ -609,7 +609,7 @@ void reservationMenu() {
 			break;
 		case 5:
 			cout << "Exiting Reservation Menu...\n";
-			break;
+			return;
 		default:
 			cout << "Invalid choice. Please enter a valid input (1-6).\n";
 		}
