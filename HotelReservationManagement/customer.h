@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <iostream>
 #include <string>
 #include <iomanip>
@@ -349,7 +349,7 @@ string generateCustomerID(const vector<Customer>& customers) {
 	for (Customer customer : customers) {
 		string id = customer.customerID;
 
-		if (id.length() >= 7 && id.substr(0, 3) == "CUS") {  // chechking if ID is valid
+		if (id.length() >= 6 && id.substr(0, 3) == "CUS") {  // chechking if ID is valid
 			string numberPart = id.substr(3); // Extract the number part
 
 			if (isDigitsOnly(numberPart)) { // validation and convert to integer
@@ -365,14 +365,12 @@ string generateCustomerID(const vector<Customer>& customers) {
 	string newID = "CUS";
 
 	if (nextNumber < 10) {
-		newID += "000";
-	}
-	else if (nextNumber < 100) {
 		newID += "00";
 	}
-	else if (nextNumber < 1000) {
+	else if (nextNumber < 100) {
 		newID += "0";
 	}
+	// For 100 and above, no padding needed
 
 	newID += to_string(nextNumber); // Append the number and return
 	return newID;
@@ -385,7 +383,7 @@ string generateMembershipID(const vector<Membership>& memberships) {
 	for (Membership membership : memberships) {
 		string id = membership.membershipID;
 
-		if (id.length() >= 7 && id.substr(0, 3) == "MEM") {  // chechking if ID is valid
+		if (id.length() >= 6 && id.substr(0, 3) == "MEM") {  // chechking if ID is valid
 			string numberPart = id.substr(3); // Extract the number part
 
 			if (isDigitsOnly(numberPart)) { // validation and convert to integer
@@ -401,14 +399,12 @@ string generateMembershipID(const vector<Membership>& memberships) {
 	string newID = "MEM";
 
 	if (nextNumber < 10) {
-		newID += "000";
-	}
-	else if (nextNumber < 100) {
 		newID += "00";
 	}
-	else if (nextNumber < 1000) {
+	else if (nextNumber < 100) {
 		newID += "0";
 	}
+	// For 100 and above, no padding needed
 
 	newID += to_string(nextNumber); // Append the number and return
 	return newID;
@@ -835,10 +831,30 @@ void manageMembership(vector<Customer>& customers, vector<Membership>& membershi
 		case 1: {
 			clear_screen();
 			print_header("Register Membership");
-			cout << endl;
 
-			string customerName= getNonEmptyInput("Enter Customer Name : ");
+			Membership membership;
+			membership.membershipID = generateMembershipID(memberships);
+			membership.registerDate = getCurrentDate();
+			membership.expiryDate = getEndDate();
+			membership.level = "BRONZE";
+			membership.points = 0;
+			membership.discountRate = 0.05;
+			membership.status = "ACTIVE";
+
+			empty_line();
+
+			// ✅ Display Membership ID and Register Date aligned like Customer ID
+			cout << left << setw(53) << ("| Membership ID: " + membership.membershipID)
+				<< "Register Date: " << membership.registerDate
+				<< setw(80 - 78) << right << "|" << endl;
+			print_divider_with_space(false);
+
+			string customerName = getNonEmptyInput("Enter Customer Name : ");
 			int customerIndex = selectCustomerByname(customers, customerName);
+			
+			print_divider_with_space(false);
+
+			customerName = getNonEmptyInput("Enter Customer Name : ");
 
 			if (customerIndex == -1) {
 				cout << "Customer not found." << endl;
@@ -1170,6 +1186,7 @@ void customerMembershipMenu() {
 
 	do {
 		print_header(" CUSTOMER & MEMBERSHIP MANAGEMENT MENU");
+		empty_line();
 		cout << "|  [1] Register Customer" << setw(80 - 24) << right << "|" << endl;
 		cout << "|  [2] Search Customer" << setw(80 - 22) << right << "|" << endl;
 		cout << "|  [3] Update Customer" << setw(80 - 22) << right << "|" << endl;
