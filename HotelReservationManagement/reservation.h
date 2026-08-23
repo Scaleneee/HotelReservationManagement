@@ -583,8 +583,8 @@ void loadReservation(string filename = "reservations.txt") {
 void reservationMenu() {
 	int choice;
 
-	print_header("Reservation Menu");
 	do {
+		print_header("Reservation Menu");
 		cout << "1. Create Reservation\n";
 		cout << "2. Customer Check-In\n";
 		cout << "3. Customer Check-Out\n";
