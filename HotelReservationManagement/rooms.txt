@@ -15,3 +15,11 @@
 702|Suite|Executive suite with city view|2|850|Available
 703|Suite|Premium suite with sea view|2|900|Occupied
 103|Standard|one queen bed with city view|2|288|Reserved
+123|Deluxe|King bed with balcony|3|200|Available
+124|Deluxe|king size bed|3|123|Reserved
+125|Deluxe|king size bed|2|120|Available
+126|Standard|queen size bed with city view|1|123|Available
+129|Standard|queen size bede|1|122|Available
+128|Deluxe|king size bed|2|133|Available
+134|Standard|queen size bed|1|150|Available
+145|Standard|queen size bed|1|145|Available

@@ -393,7 +393,8 @@ void displayAvailableRooms() {
     print_divider();
 
     //return to previous page
-    waitForBack();
+    system("pause");
+    clear_screen();
 }
 
 void checkRoomStatus() {
@@ -404,21 +405,18 @@ void checkRoomStatus() {
 
         print_header("Search Rooms by Status");
 
-        cout << endl;
-
+        empty_line();
         //display the room status option
-        cout << "Room Status:" << endl;
-        cout << " [1] Available" << endl;
-        cout << " [2] Reserved" << endl;
-        cout << " [3] Occupied" << endl;
-        cout << " [4] Housekeeping" << endl;
-        cout << " [5] Maintenance" << endl;
+        cout << "|  Room Status:" << setw(80 - 15) << right << "|" << endl;
+        cout << "|  [1] Available" << setw(80 - 16) << right << "|" << endl;
+        cout << "|  [2] Reserved" << setw(80 - 15) << right << "|" << endl;
+        cout << "|  [3] Occupied" << setw(80 - 15) << right << "|" << endl;
+        cout << "|  [4] Housekeeping" << setw(80 - 19) << right << "|" << endl;
+        cout << "|  [5] Maintenance" << setw(80 - 18) << right << "|" << endl;
+        empty_line();
+        cout << "|  [0] Back" << setw(80 - 11) << right << "|" << endl;
 
-        cout << endl;
-
-        cout << " [0] Back" << endl;
-
-        cout << endl;
+        print_divider_with_space(false);
 
         int statusChoice = get_menu_choice(5);
 
@@ -512,35 +510,8 @@ void checkRoomStatus() {
 
         print_divider();
 
-        cout << endl;
-        cout << "[0] Back" << endl;
-
-        int backChoice;
-
-        //allow 0 return to status search page
-        while (true) {
-            cout << "Enter choice: ";
-
-            if (cin >> backChoice) {
-                string remaining;
-                getline(cin, remaining);
-
-                if (remaining.find_first_not_of(" \t\r") == string::npos &&
-                    backChoice == 0) {
-                    break;
-                }
-            }
-            else {
-                cin.clear();
-                cin.ignore(
-                    numeric_limits<streamsize>::max(),
-                    '\n'
-                );
-            }
-
-            cout << "Invalid choice. Please enter 0 to Back."
-                << endl;
-        }
+        system("pause");
+        clear_screen();
     }
 }
 
@@ -680,6 +651,8 @@ void searchRoom() {
         }
         if (choice == 0) {
             return;
+        }if (choice == 1) {
+            return searchRoom();
         }
         //1 continue to another loop
         cout << endl;
@@ -790,9 +763,31 @@ void createRoom() {
     save_rooms_to_file();
 
     cout << endl;
-    cout << "Room created successfully." << endl;
+    cout << "Room created successfully!!" << endl;
 
-    waitForBack();
+    print_header("Room Information");
+
+    cout << "Room Number     : "
+        << newRoom.roomNumber << endl;
+
+    cout << "Room Type       : "
+        << newRoom.roomType << endl;
+
+    cout << "Description     : "
+        << newRoom.description << endl;
+
+    cout << "Capacity        : "
+        << newRoom.capacity << endl;
+
+    cout << "Price Per Night : RM "
+        << fixed << setprecision(2)
+        << newRoom.pricePerNight << endl;
+
+    cout << "Room Status     : "
+        << newRoom.roomStatus << endl;
+
+    print_divider();
+    system("pause");
 }
 
 void updateRoomInfo() {
@@ -1147,26 +1142,18 @@ void room_availability_menu() {
         clear_screen();
 
         print_header("Room Availability Management");
-
-        cout << endl;
+        empty_line();
 
         //display all room availability management option
-        cout << " [1] View Available Rooms" << endl;
-        cout << " [2] Search Room" << endl;
-        cout << " [3] Check Room Status" << endl;
-        cout << " [4] Create New Room" << endl;
-        cout << " [5] Update Room" << endl;
-        cout << " [6] Delete Room" << endl;
-
-        cout << endl;
-
-        cout << " [0] Back" << endl;
-
-        cout << endl;
-
-        print_divider();
-
-        cout << endl;
+        cout << "|  [1] View Available Rooms" << setw(80 - 27) << right << "|" << endl;
+        cout << "|  [2] Search Room" << setw(80 - 18) << right << "|" << endl;
+        cout << "|  [3] Check Room Status" << setw(80 - 24) << right << "|" << endl;
+        cout << "|  [4] Create New Room" << setw(80 - 22) << right << "|" << endl;
+        cout << "|  [5] Update Room" << setw(80 - 18) << right << "|" << endl;
+        cout << "|  [6] Delete Room" << setw(80 - 18) << right << "|" << endl;
+        empty_line();
+        cout << "|  [0] Back" << setw(80 - 11) << right << "|" << endl;
+        print_divider_with_space(false);
 
         //get and validate the user's menu choice
         choice = get_menu_choice(6);
