@@ -656,6 +656,10 @@ void confirm_payment_screen(
 	}
 
 	save_payments_to_file();
+	save_payments_to_file();
+
+	// award membership points after successful payment
+	add_membership_points(payment);
 
 	payment_successful(payment);
 }
