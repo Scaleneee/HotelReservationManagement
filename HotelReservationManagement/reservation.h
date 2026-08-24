@@ -584,15 +584,17 @@ void reservationMenu() {
 	int choice;
 
 	do {
-		print_header("Reservation Menu");
-		cout << "1. Create Reservation\n";
-		cout << "2. Customer Check-In\n";
-		cout << "3. Customer Check-Out\n";
-		cout << "4. Reservation Cancellation\n";
-		cout << "5. Exit\n";
-		cout << "Enter choice : ";
-		cin >> choice;
-		cin.ignore();
+		print_header("RESERVATION MENU");
+		empty_line();
+		cout << "|  [1] Create Reservation" << setw(80 - 25) << right << "|" << endl;
+		cout << "|  [2] Customer Check-In" << setw(80 - 24) << right << "|" << endl;
+		cout << "|  [3] Customer Check-Out" << setw(80 - 25) << right << "|" << endl;
+		cout << "|  [4] Reservation Cancellation" << setw(80 - 31) << right << "|" << endl;
+		
+		empty_line();
+		cout << "|  [0] Back" << setw(80 - 11) << right << "|" << endl;
+		print_divider_with_space(false);
+		choice = get_menu_choice(4);
 
 		switch (choice) {
 		case 1:
