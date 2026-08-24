@@ -5,6 +5,7 @@
 #include <sstream>
 #include <vector>
 #include <cstdlib>
+#include <ctime>     // needed for getting the current date
 #include "models.h"
 #include "payment.h"
 #include "ui.h"
@@ -108,6 +109,26 @@ Reservation* get_reservation_by_id(string reservationID) {
 	return nullptr;
 }
 
+// get current date
+void getCurrentDate(int& day, int& month, int& year) {
+	time_t now = time(0);
+	tm ltm;
+	localtime_s(&ltm, &now);   // Windows-safe version of localtime
+
+	day = ltm.tm_mday;
+	month = 1 + ltm.tm_mon;    // tm_mon is 0-11, so add 1
+	year = 1900 + ltm.tm_year; // tm_year is years since 1900
+}
+
+// search the payments vector
+Payment* get_payment_by_reservation_id(string reservationID) {
+	for (Payment& payment : payments) {
+		if (payment.reservationID == reservationID) {
+			return &payment;
+		}
+	}
+	return nullptr;
+}
 
 // Found Valid Customer
 bool isValidCustomer(string customerID) {
@@ -462,6 +483,28 @@ void customerCheckout() {
 	// update reservation status
 	reservations[searchingID].reservationStatus = "CheckedOut";
 	save_reservations_to_file();
+
+	// automatic late check-out charge
+	int checkoutDay, checkoutMonth, checkoutYear;
+	parseDate(reservations[searchingID].checkOutDate, checkoutDay, checkoutMonth, checkoutYear);
+	int scheduledCheckoutDayCount = dayCount(checkoutDay, checkoutMonth, checkoutYear);
+
+	int todayDay, todayMonth, todayYear;
+	getCurrentDate(todayDay, todayMonth, todayYear);
+	int todayDayCount = dayCount(todayDay, todayMonth, todayYear);
+
+	if (todayDayCount > scheduledCheckoutDayCount) {
+		Payment* payment = get_payment_by_reservation_id(reservationID);
+
+		if (payment != nullptr) {
+			payment->additionalCharge += 50;
+			payment->totalAmount += 50;
+			save_payments_to_file();
+
+			cout << "\nNote: Late check-out detected." << endl;
+			cout << "An additional charge of RM 50.00 has been added to this reservation's payment.\n";
+		}
+	}
 
 	// customer check out success message
 	cout << "Customer checked out successfully for reservation " << reservationID << "\n";
