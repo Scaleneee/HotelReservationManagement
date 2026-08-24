@@ -399,64 +399,62 @@ void displayAvailableRooms() {
 
 void checkRoomStatus() {
 
-    //keep the status search page active until user choose back
+    // Keep the search page active until user chooses back
     while (true) {
         clear_screen();
 
-        print_header("Search Rooms by Status");
+        print_header("Check Room Status by Room Type");
 
         empty_line();
-        //display the room status option
-        cout << "|  Room Status:" << setw(80 - 15) << right << "|" << endl;
-        cout << "|  [1] Available" << setw(80 - 16) << right << "|" << endl;
-        cout << "|  [2] Reserved" << setw(80 - 15) << right << "|" << endl;
-        cout << "|  [3] Occupied" << setw(80 - 15) << right << "|" << endl;
-        cout << "|  [4] Housekeeping" << setw(80 - 19) << right << "|" << endl;
-        cout << "|  [5] Maintenance" << setw(80 - 18) << right << "|" << endl;
+
+        // Display room type options
+        cout << "|  Room Type:" << setw(80 - 13) << right << "|" << endl;
+        cout << "|  [1] Standard" << setw(80 - 16) << right << "|" << endl;
+        cout << "|  [2] Deluxe" << setw(80 - 14) << right << "|" << endl;
+        cout << "|  [3] Family" << setw(80 - 14) << right << "|" << endl;
+        cout << "|  [4] Suite" << setw(80 - 13) << right << "|" << endl;
+
         empty_line();
+
         cout << "|  [0] Back" << setw(80 - 11) << right << "|" << endl;
 
         print_divider_with_space(false);
 
-        int statusChoice = get_menu_choice(5);
+        int typeChoice = get_menu_choice(4);
 
-        //return to previous menu
-        if (statusChoice == 0) {
+        // Return to previous menu
+        if (typeChoice == 0) {
             return;
         }
 
-        string selectedStatus;
+        string selectedType;
 
-        //convert the user's choice into corresponding room status
-        switch (statusChoice) {
+        // Convert user's choice into corresponding room type
+        switch (typeChoice) {
         case 1:
-            selectedStatus = "Available";
+            selectedType = "Standard";
             break;
 
         case 2:
-            selectedStatus = "Reserved";
+            selectedType = "Deluxe";
             break;
 
         case 3:
-            selectedStatus = "Occupied";
+            selectedType = "Family";
             break;
 
         case 4:
-            selectedStatus = "Housekeeping";
-            break;
-
-        case 5:
-            selectedStatus = "Maintenance";
+            selectedType = "Suite";
             break;
         }
 
         clear_screen();
 
-        print_header("Rooms with Status: " + selectedStatus);
+        print_header("Room Status - " + selectedType);
 
         cout << endl;
 
-        //display table 
+        // Display table
         cout << setw(10) << left << "Room No."
             << setw(15) << left << "Type"
             << setw(12) << left << "Capacity"
@@ -468,17 +466,18 @@ void checkRoomStatus() {
 
         bool found = false;
 
-        //store room that match the selected status
+        // Store rooms that match the selected room type
         vector<Room> matchedRooms;
 
-        //search through all room records
+        // Search through all room records
         for (const Room& room : rooms) {
-            if (room.roomStatus == selectedStatus) {
+
+            if (room.roomType == selectedType) {
                 matchedRooms.push_back(room);
             }
         }
 
-        //sort matched rooms by room number in ascending
+        // Sort matched rooms by room number in ascending order
         sort(
             matchedRooms.begin(),
             matchedRooms.end(),
@@ -487,8 +486,9 @@ void checkRoomStatus() {
             }
         );
 
-        //display all room that match the selected status
+        // Display all rooms that match the selected room type
         for (const Room& room : matchedRooms) {
+
             found = true;
 
             cout << setw(10) << left << room.roomNumber
@@ -502,16 +502,15 @@ void checkRoomStatus() {
                 << endl;
         }
 
-        //display a msg if no matching room is found
+        // Display message if no matching room is found
         if (!found) {
-            cout << "No rooms found with status: "
-                << selectedStatus << endl;
+            cout << "No rooms found with room type: "
+                << selectedType << endl;
         }
 
         print_divider();
 
         system("pause");
-        clear_screen();
     }
 }
 
