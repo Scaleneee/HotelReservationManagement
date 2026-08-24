@@ -5,6 +5,10 @@
 #include <sstream>
 #include <vector>
 #include <cstdlib>
+#include <ctime>
+#include <fstream>
+#include <iomanip>
+#include <regex>
 #include <ctime>     // needed for getting the current date
 #include "models.h"
 #include "payment.h"
@@ -121,7 +125,7 @@ void getCurrentDate(int& day, int& month, int& year) {
 }
 
 // search the payments vector
-Payment* get_payment_by_reservation_id(string reservationID) {
+Payment* reservation_find_payment_by_id(string reservationID) {
 	for (Payment& payment : payments) {
 		if (payment.reservationID == reservationID) {
 			return &payment;
@@ -480,7 +484,7 @@ void customerCheckin() {
 	print_header("Customer Check-In");
 	printReservationList("Booked");
 
-	cout << "Enter Reservation ID : ";
+	cout << "Enter Reservation  : ";
 	getline(cin, reservationID);
 
 	// searching reservation id
@@ -550,7 +554,7 @@ void customerCheckout() {
 	int todayDayCount = dayCount(todayDay, todayMonth, todayYear);
 
 	if (todayDayCount > scheduledCheckoutDayCount) {
-		Payment* payment = get_payment_by_reservation_id(reservationID);
+		Payment* payment = reservation_find_payment_by_id(reservationID);
 
 		if (payment != nullptr) {
 			payment->additionalCharge += 50;

@@ -193,7 +193,7 @@ vector<Payment*> get_payments_by_customer_name(string customerName) {
 
 					// find payment belonging to the reservation
 					Payment* payment =
-						get_payment_by_reservation_id(
+						reservation_find_payment_by_id(
 							reservation.reservationID
 						);
 
