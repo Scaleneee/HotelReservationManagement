@@ -4,6 +4,8 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <cstdlib>
+#include <ctime>     // needed for getting the current date
 #include "models.h"
 #include "payment.h"
 #include "ui.h"
@@ -15,6 +17,10 @@ using namespace std;
 */
 double calculate_deposit(double roomFee) {
 	return roomFee * DEPOSIT_RATE;
+}
+
+void clearScreen() {
+	system("cls");
 }
 
 void create_unpaid_payment(const Reservation& reservation)
@@ -103,15 +109,91 @@ Reservation* get_reservation_by_id(string reservationID) {
 	return nullptr;
 }
 
+// get current date
+void getCurrentDate(int& day, int& month, int& year) {
+	time_t now = time(0);
+	tm ltm;
+	localtime_s(&ltm, &now);   // Windows-safe version of localtime
+
+	day = ltm.tm_mday;
+	month = 1 + ltm.tm_mon;    // tm_mon is 0-11, so add 1
+	year = 1900 + ltm.tm_year; // tm_year is years since 1900
+}
+
+// search the payments vector
+Payment* get_payment_by_reservation_id(string reservationID) {
+	for (Payment& payment : payments) {
+		if (payment.reservationID == reservationID) {
+			return &payment;
+		}
+	}
+	return nullptr;
+}
 
 // Found Valid Customer
-bool isValidCustomer(string customerID) {
+bool isValidCustomer(string name) {
 	for (int i = 0; i < (int)customers.size(); i++) {
-		if (customers[i].customerID == customerID) {
+		if (customers[i].name == name) {
 			return true;
 		}
 	}
 	return false;
+}
+
+// convert reservation text to uppercase
+string reservationToUppercase(string text) {
+	for (char& ch : text) {
+		ch = static_cast<char>(toupper(static_cast<unsigned char>(ch)));
+	}
+	return text;
+}
+
+// find customer using name
+string findCustomer(string customerName) {
+	vector<int> matchIndex;
+
+	for (int i = 0; i < (int)customers.size(); i++) {
+		if (reservationToUppercase(customers[i].name) == reservationToUppercase(customerName)) {
+			matchIndex.push_back(i);
+		}
+	}
+
+	if (matchIndex.empty()) {
+		return "";
+	}
+
+	if (matchIndex.size() == 1) {
+		return customers[matchIndex[0]].customerID;
+	}
+
+	// if find same name
+	cout << "\n" << matchIndex.size() << " customers found with name \"" << customerName << "\":\n";
+	for (int j = 0; j < (int)matchIndex.size(); j++) {
+		cout << "  " << customers[matchIndex[j]].customerID
+			 << " - " << customers[matchIndex[j]].name
+			 << "  (" << customers[matchIndex[j]].contact << ")\n";
+	}
+
+	string enterID;
+	bool matchedID = false;
+
+	do {
+		cout << "Enter the Customer ID from the list above : ";
+		getline(cin, enterID);
+
+		for (int j = 0; j < (int)matchIndex.size(); j++) {
+			if (customers[matchIndex[j]].customerID == enterID) {
+				matchedID = true;
+				break;
+			}
+		}
+
+		if (!matchedID) {
+			cout << "Invalid Customer ID... Please try again.\n";
+		}
+	} while (!matchedID);
+
+	return enterID;
 }
 
 // Room Number
@@ -219,33 +301,33 @@ int searchingReservationID(string reservationID) {
 // Booking Confirmation
 void bookingConfirmation(const Reservation& reservation) {
 	print_header("(Booking Confirmation)");
-	cout << left << setw(20) << "Reservation ID	: " << reservation.reservationID << endl;
-	cout << left << setw(20) << "Customer ID : " << reservation.customerID << endl;
-	cout << left << setw(20) << "Room Number : " << reservation.roomNumber << endl;
-	cout << left << setw(20) << "Check-In Date : " << reservation.checkInDate << endl;
-	cout << left << setw(20) << "Check-Out Date : " << reservation.checkOutDate << endl;
-	cout << left << setw(20) << "No. of Customer : " << reservation.numberOfGuests << endl;
-	cout << left << setw(20) << "Stay Duration : " << reservation.numberOfNights << endl;
-	cout << left << setw(20) << "Room Price	: " << reservation.roomPrice << endl;
-	cout << left << setw(20) << "Room Status : " << reservation.reservationStatus << endl;
-	cout << "------------------------------- \n";
+	cout << left << setw(18) << "Reservation ID" << ": " << reservation.reservationID << endl;
+	cout << left << setw(18) << "Customer ID" << ": " << reservation.customerID << endl;
+	cout << left << setw(18) << "Room Number" << ": " << reservation.roomNumber << endl;
+	cout << left << setw(18) << "Check-In Date" << ": " << reservation.checkInDate << endl;
+	cout << left << setw(18) << "Check-Out Date" << ": " << reservation.checkOutDate << endl;
+	cout << left << setw(18) << "No. of Customer" << ": " << reservation.numberOfGuests << endl;
+	cout << left << setw(18) << "Stay Duration" << ": " << reservation.numberOfNights << " night(s)" << endl;
+	cout << left << setw(18) << "Room Price" << ": RM " << fixed << setprecision(2) << reservation.roomPrice << endl;
+	cout << left << setw(18) << "Room Status" << ": " << reservation.reservationStatus << endl;
+	cout << "-------------------------------\n";
 }
 
 // Create new reservation
 void createReservation() {
 	Reservation newReservation;
-
+	clearScreen();
 	print_header("New Reservation");
 
 	// Find Customer using Customer ID
 	bool validCustomer;
 	do {
-		cout << "Enter Customer's ID :   ";
-		getline(cin, newReservation.customerID);
+		cout << "Enter Customer's Name :   ";
+		getline(cin, newReservation.name);
 
-		validCustomer = isValidCustomer(newReservation.customerID);
+		validCustomer = isValidCustomer(newReservation.name);
 		if (!validCustomer) {
-			cout << "Customer ID not found, Please try again." << endl;
+			cout << "Customer not found, Please try again." << endl;
 		}
 	} while (!validCustomer);
 
@@ -347,9 +429,15 @@ void createReservation() {
 
 	//create reservation success message
 	cout << "\nReservation created successfully!\n";
+	clearScreen();
 
+	cout << endl;
 	// Print Booking Confirmation
 	bookingConfirmation(newReservation);
+	cout << "\nPress [ENTER] to continue..." << endl;
+	cin.get();
+
+	clearScreen();
 }
 
 // Reservation List
@@ -387,6 +475,7 @@ void printReservationList(string statusFilter1, string statusFilter2 = "") {
 
 // Customer check in
 void customerCheckin() {
+	clearScreen();
 	string reservationID;
 	print_header("Customer Check-In");
 	printReservationList("Booked");
@@ -421,6 +510,8 @@ void customerCheckin() {
 
 // Customer check out
 void customerCheckout() {
+	clearScreen();
+
 	string reservationID;
 	print_header("Customer Check-Out");
 	printReservationList("CheckedIn");
@@ -449,12 +540,36 @@ void customerCheckout() {
 	reservations[searchingID].reservationStatus = "CheckedOut";
 	save_reservations_to_file();
 
+	// automatic late check-out charge
+	int checkoutDay, checkoutMonth, checkoutYear;
+	parseDate(reservations[searchingID].checkOutDate, checkoutDay, checkoutMonth, checkoutYear);
+	int scheduledCheckoutDayCount = dayCount(checkoutDay, checkoutMonth, checkoutYear);
+
+	int todayDay, todayMonth, todayYear;
+	getCurrentDate(todayDay, todayMonth, todayYear);
+	int todayDayCount = dayCount(todayDay, todayMonth, todayYear);
+
+	if (todayDayCount > scheduledCheckoutDayCount) {
+		Payment* payment = get_payment_by_reservation_id(reservationID);
+
+		if (payment != nullptr) {
+			payment->additionalCharge += 50;
+			payment->totalAmount += 50;
+			save_payments_to_file();
+
+			cout << "\nNote: Late check-out detected." << endl;
+			cout << "An additional charge of RM 50.00 has been added to this reservation's payment.\n";
+		}
+	}
+
 	// customer check out success message
 	cout << "Customer checked out successfully for reservation " << reservationID << "\n";
 }
 
 // Cancellation of reservation
 void cancelReservation() {
+	clearScreen();
+
 	string reservationID;
 	print_header("Reservation Cancellation");
 	cout << "Enter Reservation ID : ";
@@ -480,6 +595,8 @@ void cancelReservation() {
 	int reasonChoice;
 	bool validReasonChoice;
 	do {
+		clearScreen();
+
 		cout << "\nSelect an Cancellation Reason\n";
 		cout << "1. Customer Requested Cancellation\n";
 		cout << "2. Changes of Reservation\n";
@@ -599,21 +716,27 @@ void reservationMenu() {
 		switch (choice) {
 		case 1:
 			createReservation();
+			clear_screen();
 			break;
 		case 2:
 			customerCheckin();
+			clear_screen();
 			break;
 		case 3:
 			customerCheckout();
+			clear_screen();
 			break;
 		case 4:
 			cancelReservation();
+			clear_screen();
 			break;
-		case 5:
+		case 0:
 			cout << "Exiting Reservation Menu...\n";
+			clear_screen();
 			return;
 		default:
 			cout << "Invalid choice. Please enter a valid input (1-6).\n";
 		}
 	} while (choice != 6);
+
 }

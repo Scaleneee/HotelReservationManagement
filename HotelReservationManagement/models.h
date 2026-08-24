@@ -42,6 +42,7 @@ struct Room {
 struct Reservation {
     string reservationID;
     string customerID;
+    string name;
     int roomNumber;
     string checkInDate;
     string checkOutDate;
