@@ -131,13 +131,69 @@ Payment* get_payment_by_reservation_id(string reservationID) {
 }
 
 // Found Valid Customer
-bool isValidCustomer(string customerID) {
+bool isValidCustomer(string name) {
 	for (int i = 0; i < (int)customers.size(); i++) {
-		if (customers[i].customerID == customerID) {
+		if (customers[i].name == name) {
 			return true;
 		}
 	}
 	return false;
+}
+
+// convert reservation text to uppercase
+string reservationToUppercase(string text) {
+	for (char& ch : text) {
+		ch = static_cast<char>(toupper(static_cast<unsigned char>(ch)));
+	}
+	return text;
+}
+
+// find customer using name
+string findCustomer(string customerName) {
+	vector<int> matchIndex;
+
+	for (int i = 0; i < (int)customers.size(); i++) {
+		if (reservationToUppercase(customers[i].name) == reservationToUppercase(customerName)) {
+			matchIndex.push_back(i);
+		}
+	}
+
+	if (matchIndex.empty()) {
+		return "";
+	}
+
+	if (matchIndex.size() == 1) {
+		return customers[matchIndex[0]].customerID;
+	}
+
+	// if find same name
+	cout << "\n" << matchIndex.size() << " customers found with name \"" << customerName << "\":\n";
+	for (int j = 0; j < (int)matchIndex.size(); j++) {
+		cout << "  " << customers[matchIndex[j]].customerID
+			 << " - " << customers[matchIndex[j]].name
+			 << "  (" << customers[matchIndex[j]].contact << ")\n";
+	}
+
+	string enterID;
+	bool matchedID = false;
+
+	do {
+		cout << "Enter the Customer ID from the list above : ";
+		getline(cin, enterID);
+
+		for (int j = 0; j < (int)matchIndex.size(); j++) {
+			if (customers[matchIndex[j]].customerID == enterID) {
+				matchedID = true;
+				break;
+			}
+		}
+
+		if (!matchedID) {
+			cout << "Invalid Customer ID... Please try again.\n";
+		}
+	} while (!matchedID);
+
+	return enterID;
 }
 
 // Room Number
@@ -266,12 +322,12 @@ void createReservation() {
 	// Find Customer using Customer ID
 	bool validCustomer;
 	do {
-		cout << "Enter Customer's ID :   ";
-		getline(cin, newReservation.customerID);
+		cout << "Enter Customer's Name :   ";
+		getline(cin, newReservation.name);
 
-		validCustomer = isValidCustomer(newReservation.customerID);
+		validCustomer = isValidCustomer(newReservation.name);
 		if (!validCustomer) {
-			cout << "Customer ID not found, Please try again." << endl;
+			cout << "Customer not found, Please try again." << endl;
 		}
 	} while (!validCustomer);
 
