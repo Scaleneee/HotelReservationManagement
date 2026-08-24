@@ -4,6 +4,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <cstdlib>
 #include "models.h"
 #include "payment.h"
 #include "ui.h"
@@ -15,6 +16,10 @@ using namespace std;
 */
 double calculate_deposit(double roomFee) {
 	return roomFee * DEPOSIT_RATE;
+}
+
+void clearScreen() {
+	system("cls");
 }
 
 void create_unpaid_payment(const Reservation& reservation)
@@ -219,22 +224,22 @@ int searchingReservationID(string reservationID) {
 // Booking Confirmation
 void bookingConfirmation(const Reservation& reservation) {
 	print_header("(Booking Confirmation)");
-	cout << left << setw(20) << "Reservation ID	: " << reservation.reservationID << endl;
-	cout << left << setw(20) << "Customer ID : " << reservation.customerID << endl;
-	cout << left << setw(20) << "Room Number : " << reservation.roomNumber << endl;
-	cout << left << setw(20) << "Check-In Date : " << reservation.checkInDate << endl;
-	cout << left << setw(20) << "Check-Out Date : " << reservation.checkOutDate << endl;
-	cout << left << setw(20) << "No. of Customer : " << reservation.numberOfGuests << endl;
-	cout << left << setw(20) << "Stay Duration : " << reservation.numberOfNights << endl;
-	cout << left << setw(20) << "Room Price	: " << reservation.roomPrice << endl;
-	cout << left << setw(20) << "Room Status : " << reservation.reservationStatus << endl;
-	cout << "------------------------------- \n";
+	cout << left << setw(18) << "Reservation ID" << ": " << reservation.reservationID << endl;
+	cout << left << setw(18) << "Customer ID" << ": " << reservation.customerID << endl;
+	cout << left << setw(18) << "Room Number" << ": " << reservation.roomNumber << endl;
+	cout << left << setw(18) << "Check-In Date" << ": " << reservation.checkInDate << endl;
+	cout << left << setw(18) << "Check-Out Date" << ": " << reservation.checkOutDate << endl;
+	cout << left << setw(18) << "No. of Customer" << ": " << reservation.numberOfGuests << endl;
+	cout << left << setw(18) << "Stay Duration" << ": " << reservation.numberOfNights << " night(s)" << endl;
+	cout << left << setw(18) << "Room Price" << ": RM " << fixed << setprecision(2) << reservation.roomPrice << endl;
+	cout << left << setw(18) << "Room Status" << ": " << reservation.reservationStatus << endl;
+	cout << "-------------------------------\n";
 }
 
 // Create new reservation
 void createReservation() {
 	Reservation newReservation;
-
+	clearScreen();
 	print_header("New Reservation");
 
 	// Find Customer using Customer ID
@@ -347,9 +352,15 @@ void createReservation() {
 
 	//create reservation success message
 	cout << "\nReservation created successfully!\n";
+	clearScreen();
 
+	cout << endl;
 	// Print Booking Confirmation
 	bookingConfirmation(newReservation);
+	cout << "\nPress [ENTER] to continue..." << endl;
+	cin.get();
+
+	clearScreen();
 }
 
 // Reservation List
@@ -387,6 +398,7 @@ void printReservationList(string statusFilter1, string statusFilter2 = "") {
 
 // Customer check in
 void customerCheckin() {
+	clearScreen();
 	string reservationID;
 	print_header("Customer Check-In");
 	printReservationList("Booked");
@@ -421,6 +433,8 @@ void customerCheckin() {
 
 // Customer check out
 void customerCheckout() {
+	clearScreen();
+
 	string reservationID;
 	print_header("Customer Check-Out");
 	printReservationList("CheckedIn");
@@ -455,6 +469,8 @@ void customerCheckout() {
 
 // Cancellation of reservation
 void cancelReservation() {
+	clearScreen();
+
 	string reservationID;
 	print_header("Reservation Cancellation");
 	cout << "Enter Reservation ID : ";
@@ -480,6 +496,8 @@ void cancelReservation() {
 	int reasonChoice;
 	bool validReasonChoice;
 	do {
+		clearScreen();
+
 		cout << "\nSelect an Cancellation Reason\n";
 		cout << "1. Customer Requested Cancellation\n";
 		cout << "2. Changes of Reservation\n";
@@ -599,21 +617,27 @@ void reservationMenu() {
 		switch (choice) {
 		case 1:
 			createReservation();
+			clear_screen();
 			break;
 		case 2:
 			customerCheckin();
+			clear_screen();
 			break;
 		case 3:
 			customerCheckout();
+			clear_screen();
 			break;
 		case 4:
 			cancelReservation();
+			clear_screen();
 			break;
-		case 5:
+		case 0:
 			cout << "Exiting Reservation Menu...\n";
+			clear_screen();
 			return;
 		default:
 			cout << "Invalid choice. Please enter a valid input (1-6).\n";
 		}
 	} while (choice != 6);
+
 }
