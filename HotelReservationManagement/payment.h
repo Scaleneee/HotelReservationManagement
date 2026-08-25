@@ -193,7 +193,7 @@ vector<Payment*> get_payments_by_customer_name(string customerName) {
 
 					// find payment belonging to the reservation
 					Payment* payment =
-						get_payment_by_reservation_id(
+						reservation_find_payment_by_id(
 							reservation.reservationID
 						);
 
@@ -568,7 +568,7 @@ void confirm_payment_screen(
 	);
 
 	empty_line();
-	print_divider_with_space(false);
+	print_divider();
 
 	// -----------------------------
 	// GET AMOUNT PAID
@@ -1416,6 +1416,12 @@ void deposit_settlement_successful_screen(Payment payment)
 
 	print_table_row(
 		format("{:<23}: RM{:>9.2f}",
+			"|Additional Charge",
+			payment.additionalCharge)
+	);
+
+	print_table_row(
+		format("{:<23}: RM{:>9.2f}",
 			"|Deposit Retained",
 			payment.depositRetained)
 	);
@@ -1479,25 +1485,51 @@ void settle_deposit_screen(Payment& payment)
 	empty_line();
 	print_divider_with_space(false);
 
-	// ask charges
+	// ask damage charge
 	double damageCharge =
-		get_non_negative_amount("Enter Damage Charge     : RM ");
+		get_non_negative_amount(
+			"Enter Damage Charge     : RM "
+		);
 
-	double additionalCharge =
-		get_non_negative_amount("Enter Additional Charge : RM ");
+	// additional charge
+	double additionalCharge;
 
-	// calculate total deduction
+	// no automatic additional charge
+	if (payment.additionalCharge == 0.0)
+	{
+		additionalCharge =
+			get_non_negative_amount(
+				"Enter Additional Charge : RM "
+			);
+	}
+	else
+	{
+		// use existing automatic charge,
+		// e.g. late checkout charge
+		additionalCharge = payment.additionalCharge;
+
+		cout << "Additional Charge       : RM "
+			<< format("{:.2f}", additionalCharge)
+			<< endl;
+	}
+
+	// total amount deducted from deposit
 	double totalDeduction =
 		damageCharge + additionalCharge;
 
-	double depositReturned;
-	double depositRetained;
+	double depositReturned = 0.0;
+	double depositRetained = 0.0;
+	double outstandingAmount = 0.0;
 
-	// deduction exceeds deposit
-	if (totalDeduction >= payment.depositAmount)
+	// charges exceed deposit
+	if (totalDeduction > payment.depositAmount)
 	{
-		depositReturned = 0.0;
 		depositRetained = payment.depositAmount;
+		depositReturned = 0.0;
+
+		// customer needs to pay the remaining amount
+		outstandingAmount =
+			totalDeduction - payment.depositAmount;
 	}
 	else
 	{
@@ -1509,9 +1541,19 @@ void settle_deposit_screen(Payment& payment)
 
 	clear_screen();
 
-	// display charges
+	// confirmation screen
 	print_header("Confirm Deposit Settlement");
+
 	empty_line();
+
+	print_table_row(
+		format("{:<23}: RM{:>9.2f}",
+			"|Security Deposit",
+			payment.depositAmount)
+	);
+
+	empty_line();
+
 	print_table_row(
 		format("{:<23}: RM{:>9.2f}",
 			"|Damage Charge",
@@ -1527,7 +1569,6 @@ void settle_deposit_screen(Payment& payment)
 	empty_line();
 	print_divider();
 
-	// settlement result
 	print_table_row(
 		format("{:<23}: RM{:>9.2f}",
 			"|Deposit Retained",
@@ -1540,10 +1581,19 @@ void settle_deposit_screen(Payment& payment)
 			depositReturned)
 	);
 
+	// show outstanding amount if deposit is insufficient
+	if (outstandingAmount > 0.0)
+	{
+		print_table_row(
+			format("{:<23}: RM{:>9.2f}",
+				"|Outstanding Amount",
+				outstandingAmount)
+		);
+	}
+
 	empty_line();
 	print_divider_with_space(false);
 
-	// confirm settlement
 	cout << "Confirm Deposit Settlement?" << endl;
 
 	cout << endl;
@@ -1553,22 +1603,85 @@ void settle_deposit_screen(Payment& payment)
 
 	int choice = get_menu_choice(1);
 
-	// back
 	if (choice == 0)
 	{
 		return;
 	}
 
+	// ---------------------------------------
+	// collect outstanding payment
+	// ---------------------------------------
+
+	if (outstandingAmount > 0.0)
+	{
+		clear_screen();
+
+		print_header("Outstanding Payment");
+
+		empty_line();
+
+		print_table_row(
+			format("{:<23}: RM{:>9.2f}",
+				"|Outstanding Amount",
+				outstandingAmount)
+		);
+
+		empty_line();
+		print_divider_with_space(false);
+
+		// customer pays remaining amount
+		double extraAmountPaid =
+			get_amount_paid(outstandingAmount);
+
+		double extraChange =
+			extraAmountPaid - outstandingAmount;
+
+		empty_line();
+
+		print_table_row(
+			format("{:<23}: RM{:>9.2f}",
+				"|Amount Paid",
+				extraAmountPaid)
+		);
+
+		print_table_row(
+			format("{:<23}: RM{:>9.2f}",
+				"|Change",
+				extraChange)
+		);
+
+		empty_line();
+		print_divider_with_space(false);
+
+		cout << "Press any key to continue...";
+		_getch();
+
+		// add the actual outstanding amount collected
+		payment.amountPaid += outstandingAmount;
+	}
+
+	// ---------------------------------------
 	// update payment
+	// ---------------------------------------
+
 	payment.damageCharge = damageCharge;
-	payment.additionalCharge += additionalCharge;
+
+	// IMPORTANT:
+	// use = instead of += to avoid doubling
+	// automatic late checkout charge
+	payment.additionalCharge = additionalCharge;
+
 	payment.depositRetained = depositRetained;
 	payment.depositReturned = depositReturned;
 
-	// payment lifecycle completed
+	// add checkout charges to final payment amount
+	payment.totalAmount +=
+		damageCharge + additionalCharge;
+
+	// settlement completed
 	payment.paymentStatus = "Completed";
 
-	// save changes
+	// save
 	save_payments_to_file();
 
 	// successful screen

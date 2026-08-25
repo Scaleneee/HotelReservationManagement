@@ -5,6 +5,9 @@
 #include <sstream>
 #include <vector>
 #include <cstdlib>
+#include <fstream>
+#include <iomanip>
+#include <regex>
 #include <ctime>     // needed for getting the current date
 #include "models.h"
 #include "payment.h"
@@ -121,7 +124,7 @@ void getCurrentDate(int& day, int& month, int& year) {
 }
 
 // search the payments vector
-Payment* get_payment_by_reservation_id(string reservationID) {
+Payment* reservation_find_payment_by_id(string reservationID) {
 	for (Payment& payment : payments) {
 		if (payment.reservationID == reservationID) {
 			return &payment;
@@ -291,7 +294,7 @@ double roomPricePerNight(int roomNumber) {
 // Search Reservation ID
 int searchingReservationID(string reservationID) {
 	for (int i = 0; i < (int)reservations.size(); i++) {
-		if (reservations[i].reservationID == reservationID) {
+		if (reservationToUppercase(reservations[i].reservationID) == reservationToUppercase(reservationID)) {
 			return i;
 		}
 	}
@@ -320,16 +323,19 @@ void createReservation() {
 	print_header("New Reservation");
 
 	// Find Customer using Customer ID
-	bool validCustomer;
+	string customerID;
 	do {
 		cout << "Enter Customer's Name :   ";
 		getline(cin, newReservation.name);
 
-		validCustomer = isValidCustomer(newReservation.name);
-		if (!validCustomer) {
+		customerID = findCustomer(newReservation.name);
+
+		if (customerID == "") {
 			cout << "Customer not found, Please try again." << endl;
 		}
-	} while (!validCustomer);
+	} while (customerID == "");
+
+	newReservation.customerID = customerID;
 
 	// Room Number of Customer
 	bool validRoomNumber;
@@ -480,8 +486,10 @@ void customerCheckin() {
 	print_header("Customer Check-In");
 	printReservationList("Booked");
 
-	cout << "Enter Reservation ID : ";
+	cout << "Enter Reservation  : ";
 	getline(cin, reservationID);
+
+	reservationID = reservationToUppercase(reservationID);
 
 	// searching reservation id
 	int searchingID = searchingReservationID(reservationID);
@@ -504,8 +512,13 @@ void customerCheckin() {
 	reservations[searchingID].reservationStatus = "CheckedIn";
 	save_reservations_to_file();
 
+
 	// customer check in success message
 	cout << "Customer checked in successfully for reservation " << reservationID << "\n";
+	cout << "\nPress [ENTER] to continue..." << endl;
+	cin.get();
+
+	clearScreen();
 }
 
 // Customer check out
@@ -518,6 +531,8 @@ void customerCheckout() {
 
 	cout << "Enter Reservation ID : ";
 	getline(cin, reservationID);
+
+	reservationID = reservationToUppercase(reservationID);
 
 	// searching reservation id
 	int searchingID = searchingReservationID(reservationID);
@@ -550,7 +565,7 @@ void customerCheckout() {
 	int todayDayCount = dayCount(todayDay, todayMonth, todayYear);
 
 	if (todayDayCount > scheduledCheckoutDayCount) {
-		Payment* payment = get_payment_by_reservation_id(reservationID);
+		Payment* payment = reservation_find_payment_by_id(reservationID);
 
 		if (payment != nullptr) {
 			payment->additionalCharge += 50;
@@ -564,6 +579,10 @@ void customerCheckout() {
 
 	// customer check out success message
 	cout << "Customer checked out successfully for reservation " << reservationID << "\n";
+	cout << "\nPress [ENTER] to continue..." << endl;
+	cin.get();
+
+	clearScreen();
 }
 
 // Cancellation of reservation
@@ -572,6 +591,7 @@ void cancelReservation() {
 
 	string reservationID;
 	print_header("Reservation Cancellation");
+	printReservationList("Booked", "CheckedIn");
 	cout << "Enter Reservation ID : ";
 	getline(cin, reservationID);
 
@@ -597,14 +617,17 @@ void cancelReservation() {
 	do {
 		clearScreen();
 
-		cout << "\nSelect an Cancellation Reason\n";
-		cout << "1. Customer Requested Cancellation\n";
-		cout << "2. Changes of Reservation\n";
-		cout << "3. Maintenance Issue\n";
-		cout << "4. Emergency\n";
-		cout << "5. Other\n";
-		cin >> reasonChoice;
-		cin.ignore();
+		print_header("Select an Cancellation Reason");
+		empty_line();
+		cout << "|  [1] Customer Requested Cancellation" << setw(80 - 38) << right << "|" << endl;
+		cout << "|  [2] Changes of Reservation" << setw(80 - 29) << right << "|" << endl;
+		cout << "|  [3] Maintenance Issue" << setw(80 - 24) << right << "|" << endl;
+		cout << "|  [4] Emergency" << setw(80 - 16) << right << "|" << endl;
+		empty_line();
+		cout << "|  [5] Other" << setw(80 - 12) << right << "|" << endl;
+		
+		print_divider_with_space(false);
+		reasonChoice = get_menu_choice(4);
 
 		validReasonChoice = (reasonChoice >= 1 && reasonChoice <= 5);
 		if (!validReasonChoice) {
@@ -639,6 +662,7 @@ void cancelReservation() {
 		cout << "Confirm Cancellation ? (Y/N) : ";
 		cin >> confirm;
 		cin.ignore();
+		confirm = toupper(confirm);
 
 		if (confirm != 'Y' && confirm != 'N') {
 			cout << "Invalid input. Please enter the valid input (Y/N).\n";
@@ -657,6 +681,10 @@ void cancelReservation() {
 
 	// cancellation success message
 	cout << "Reservation " << reservationID << " has been cancelled..." << endl;
+	cout << "\nPress [ENTER] to continue..." << endl;
+	cin.get();
+
+	clearScreen();
 }
 
 // read the records in reservations.txt
