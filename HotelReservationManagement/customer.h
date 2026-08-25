@@ -490,7 +490,11 @@ void registerCustomer(vector<Customer>& customers) {
 
 	print_divider_with_space(false);
 
-	customer.name = getNonEmptyInput("Enter Customer Name  : ");
+	customer.name = getNonEmptyInput("Enter Customer Name [0 to back]: ");
+	if (toUpperText(customer.name) == "0") {
+		clear_screen();
+		return;
+	}
 	customer.contact = getValidatedContact("Enter Contact Number : ");
 	customer.gender = getValidatedGender("Enter Gender         : ");
 	customer.icNumber = getValidatedICNumber("Enter IC Number      : ");
@@ -547,6 +551,7 @@ void updateCustomer(vector<Customer>& customers) {
 
 	string customerName = getNonEmptyInput("Enter Customer Name to Update [0 to back] : ");
 	if (toUpperText(customerName) == "0") {
+		clear_screen();
 		return;
 	}
 
@@ -649,6 +654,7 @@ void activateCustomer(vector<Customer>& customers) {
 
 	string customerName= getNonEmptyInput("Enter Customer Name to activate [0 to back] : ");
 	if (toUpperText(customerName) == "0") {
+		clear_screen();
 		return;
 	}
 
@@ -699,6 +705,7 @@ void deactivateCustomer(vector<Customer>& customers, const vector<Reservation>& 
 	cout << endl;
 	string customerName = getNonEmptyInput("Enter Customer Name to deactivate [0 to back] : ");
 	if (toUpperText(customerName) == "0") {
+		clear_screen();
 		return;
 	}
 
@@ -849,8 +856,12 @@ void manageMembership(vector<Customer>& customers, vector<Membership>& membershi
 				<< setw(80 - 78) << right << "|" << endl;
 			print_divider_with_space(false);
 
-			string customerName = getNonEmptyInput("Enter Customer Name : ");
+			string customerName = getNonEmptyInput("Enter Customer Name [0 to back]: ");
 			int customerIndex = selectCustomerByname(customers, customerName);
+			if (toUpperText(customerName) == "0") {
+				clear_screen();
+				break;
+			}
 			
 			print_divider_with_space(false);
 
@@ -916,8 +927,12 @@ void manageMembership(vector<Customer>& customers, vector<Membership>& membershi
 			print_header("View Membership Details");
 			cout << endl;
 
-			string customerName= getNonEmptyInput("Enter Customer Name : ");
+			string customerName= getNonEmptyInput("Enter Customer Name [0 to back]: ");
 			int customerIndex = selectCustomerByname(customers, customerName);
+			if (toUpperText(customerName) == "0") {
+				clear_screen();
+				break;
+			}
 
 			if (customerIndex == -1) {
 				cout << "Customer not found." << endl;
@@ -1208,7 +1223,9 @@ void customerMembershipMenu() {
 		case 2: {
 			string customerName = getNonEmptyInput("Enter Customer Name [0 to back] : ");
 			if (toUpperText(customerName) == "0") {
-				break;
+				clear_screen();
+				customerMembershipMenu();
+				return;;
 			}
 
 			searchCustomer(customers, memberships, customerName);
@@ -1234,19 +1251,18 @@ void customerMembershipMenu() {
 		case 7: {
 			string customerName= getNonEmptyInput("Enter Customer Name to view the booking history [0 to back] : ");
 			if (toUpperText(customerName) == "0") {
-				break;
+				clear_screen();
+				customerMembershipMenu();
+				return;
 			}
 			
 			viewBookingHistory(customerName, reservations);
 			break;
 		}
 
-		case 0:
-			cout << "Returning to main menu...";
-			break;
-
 		default:
-			cout << "Invalid Choice.";
+			clear_screen();
+			break;
 		}
 
 	} while (choice != 0);
