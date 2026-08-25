@@ -5,7 +5,6 @@
 #include <sstream>
 #include <vector>
 #include <cstdlib>
-#include <ctime>
 #include <fstream>
 #include <iomanip>
 #include <regex>
@@ -295,7 +294,7 @@ double roomPricePerNight(int roomNumber) {
 // Search Reservation ID
 int searchingReservationID(string reservationID) {
 	for (int i = 0; i < (int)reservations.size(); i++) {
-		if (reservations[i].reservationID == reservationID) {
+		if (reservationToUppercase(reservations[i].reservationID) == reservationToUppercase(reservationID)) {
 			return i;
 		}
 	}
@@ -324,16 +323,19 @@ void createReservation() {
 	print_header("New Reservation");
 
 	// Find Customer using Customer ID
-	bool validCustomer;
+	string customerID;
 	do {
 		cout << "Enter Customer's Name :   ";
 		getline(cin, newReservation.name);
 
-		validCustomer = isValidCustomer(newReservation.name);
-		if (!validCustomer) {
+		customerID = findCustomer(newReservation.name);
+
+		if (customerID == "") {
 			cout << "Customer not found, Please try again." << endl;
 		}
-	} while (!validCustomer);
+	} while (customerID == "");
+
+	newReservation.customerID = customerID;
 
 	// Room Number of Customer
 	bool validRoomNumber;
