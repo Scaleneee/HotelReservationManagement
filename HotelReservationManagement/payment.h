@@ -568,7 +568,7 @@ void confirm_payment_screen(
 	);
 
 	empty_line();
-	print_divider_with_space(false);
+	print_divider();
 
 	// -----------------------------
 	// GET AMOUNT PAID
