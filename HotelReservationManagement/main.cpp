@@ -18,6 +18,9 @@ vector<Payment> payments;
 
 void main_menu()
 {
+	// set the theme to white bg and black fg
+	system("color F0");
+
 	int choice;
 
 	do
