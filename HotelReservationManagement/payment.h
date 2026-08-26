@@ -192,10 +192,7 @@ vector<Payment*> get_payments_by_customer_name(string customerName) {
 				if (reservation.customerID == customer.customerID) {
 
 					// find payment belonging to the reservation
-					Payment* payment =
-						reservation_find_payment_by_id(
-							reservation.reservationID
-						);
+					Payment* payment = get_payment_by_reservation_id(reservation.reservationID);
 
 					if (payment != nullptr) {
 						matchedPayments.push_back(payment);
