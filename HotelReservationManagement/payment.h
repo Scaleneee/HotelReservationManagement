@@ -1330,7 +1330,7 @@ void process_refund_screen()
 
 		string reservationID;
 
-		cout << "Enter Payment ID to process refund [0 to back]: ";
+		cout << "Enter Reservation ID to process refund [0 to back]: ";
 		cin >> reservationID;
 
 		if (reservationID == "0")
@@ -1345,7 +1345,7 @@ void process_refund_screen()
 			::toupper
 		);
 
-		if (!check_payment_id_format(reservationID))
+		if (!check_reservation_id_format(reservationID))
 		{
 			cout << "Payment ID format incorrect..." << endl;
 
