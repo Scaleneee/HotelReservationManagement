@@ -1,4 +1,3 @@
-
 101|Standard|One queen bed with city view|2|180|Reserved
 102|Standard|Two single beds|2|180|Available
 201|Deluxe|King bed with larger room|2|280|Reserved
