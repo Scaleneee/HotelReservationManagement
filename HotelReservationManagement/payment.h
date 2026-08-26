@@ -345,8 +345,6 @@ void payment_successful(Payment payment) {
 	// print receipt
 	print_receipt(payment);
 
-	cout << endl;
-
 	// footer
 	print_header("Thanks For Your Payment");
 	cout << "Press any key to continue...";
