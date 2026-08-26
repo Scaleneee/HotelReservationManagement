@@ -495,6 +495,7 @@ void registerCustomer(vector<Customer>& customers) {
 		clear_screen();
 		return;
 	}
+
 	customer.contact = getValidatedContact("Enter Contact Number : ");
 	customer.gender = getValidatedGender("Enter Gender         : ");
 	customer.icNumber = getValidatedICNumber("Enter IC Number      : ");
@@ -862,10 +863,6 @@ void manageMembership(vector<Customer>& customers, vector<Membership>& membershi
 				clear_screen();
 				break;
 			}
-			
-			print_divider_with_space(false);
-
-			customerName = getNonEmptyInput("Enter Customer Name : ");
 
 			if (customerIndex == -1) {
 				cout << "Customer not found." << endl;
