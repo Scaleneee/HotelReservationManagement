@@ -345,6 +345,7 @@ void payment_successful(Payment payment) {
 	// print receipt
 	print_receipt(payment);
 
+
 	// footer
 	print_header("Thanks For Your Payment");
 	cout << "Press any key to continue...";
@@ -1327,24 +1328,24 @@ void process_refund_screen()
 
 		print_payment_table(refundable_payments);
 
-		string paymentID;
+		string reservationID;
 
 		cout << "Enter Payment ID to process refund [0 to back]: ";
-		cin >> paymentID;
+		cin >> reservationID;
 
-		if (paymentID == "0")
+		if (reservationID == "0")
 		{
 			return;
 		}
 
 		transform(
-			paymentID.begin(),
-			paymentID.end(),
-			paymentID.begin(),
+			reservationID.begin(),
+			reservationID.end(),
+			reservationID.begin(),
 			::toupper
 		);
 
-		if (!check_payment_id_format(paymentID))
+		if (!check_payment_id_format(reservationID))
 		{
 			cout << "Payment ID format incorrect..." << endl;
 
@@ -1359,7 +1360,7 @@ void process_refund_screen()
 		for (Payment* payment : refundable_payments)
 		{
 			if (payment != nullptr &&
-				payment->paymentID == paymentID)
+				payment->reservationID == reservationID)
 			{
 				selectedPayment = payment;
 				break;
