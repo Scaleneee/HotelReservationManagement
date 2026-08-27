@@ -561,7 +561,7 @@ void customerCheckout() {
 		return;
 	}
 
-	cout << "Enter actual check-in time (e.g. : 23:59) : ";
+	cout << "Enter actual check-out time (e.g. : 23:59) : ";
 	getline(cin, reservations[searchingID].actualCheckOutTime);
 
 	// update reservation status
