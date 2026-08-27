@@ -408,6 +408,11 @@ void createReservation() {
 	if (!roomAvailability(newReservation.roomNumber, checkinDayCount, checkoutDayCount)) {
 		cout << "Sorry, Room " << newReservation.roomNumber
 			<< " is booked for those dates. Reservation cancelled..." << endl;
+		cout << endl;
+		cout << "\nPress [ENTER] to continue..." << endl;
+		cin.get();
+
+		clearScreen();
 		return;
 	}
 
@@ -496,6 +501,10 @@ void customerCheckin() {
 
 	if (searchingID == -1) {
 		cout << "Reservation ID not found.\n";
+		cout << "\nPress [ENTER] to continue..." << endl;
+		cin.get();
+
+		clearScreen();
 		return;
 	}
 
@@ -539,6 +548,10 @@ void customerCheckout() {
 
 	if (searchingID == -1) {
 		cout << "Reservation ID not found.\n";
+		cout << "\nPress [ENTER] to continue..." << endl;
+		cin.get();
+
+		clearScreen();
 		return;
 	}
 
@@ -600,6 +613,10 @@ void cancelReservation() {
 
 	if (searchingID == -1) {
 		cout << "Reservation ID not found.\n";
+		cout << "\nPress [ENTER] to continue..." << endl;
+		cin.get();
+
+		clearScreen();
 		return;
 	}
 
@@ -623,15 +640,20 @@ void cancelReservation() {
 		cout << "|  [2] Changes of Reservation" << setw(80 - 29) << right << "|" << endl;
 		cout << "|  [3] Maintenance Issue" << setw(80 - 24) << right << "|" << endl;
 		cout << "|  [4] Emergency" << setw(80 - 16) << right << "|" << endl;
-		empty_line();
 		cout << "|  [5] Other" << setw(80 - 12) << right << "|" << endl;
+		empty_line();
+		cout << "|  [0] Back" << setw(80 - 11) << right << "|" << endl;
 		
 		print_divider_with_space(false);
-		reasonChoice = get_menu_choice(4);
+		reasonChoice = get_menu_choice(5);
 
-		validReasonChoice = (reasonChoice >= 1 && reasonChoice <= 5);
+		validReasonChoice = (reasonChoice >= 0 && reasonChoice <= 5);
 		if (!validReasonChoice) {
 			cout << "Invalid choice. Please enter a valid choice (between 1 to 5)\n";
+			cout << "\nPress [ENTER] to continue..." << endl;
+			cin.get();
+
+			clearScreen();
 		}
 	} while (!validReasonChoice);
 
@@ -652,6 +674,8 @@ void cancelReservation() {
 		cout << "Please enter the reason : ";
 		getline(cin, reason);
 		break;
+	case 0:
+		return;
 	}
 
 	// Cancellation Confirmation
