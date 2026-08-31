@@ -102,6 +102,47 @@ bool isDigitsOnly(const string& text) {
 	return true;
 }
 
+bool isAlphabeticName(const string& text) {
+	if (text.empty()) {
+		return false;
+	}
+	for (char ch : text) {
+		if (isalpha(ch) == 0 && ch != ' ') {
+			return false;
+		}
+	}
+	return true;
+}
+
+string trimText(const string& text) {
+	size_t first = text.find_first_not_of(" \t\r\n");
+	if (first == string::npos) {
+		return "";
+	}
+	size_t last = text.find_last_not_of(" \t\r\n");
+	return text.substr(first, last - first + 1);
+}
+
+string getValidName(const string& prompt) {
+	string input;
+	do {
+		cout << prompt;
+		getline(cin, input);
+		input = trimText(input);
+
+		if (toUpperText(input) == "0") {
+			return "0";          // keep the [0 to back] feature working
+		}
+		if (isBlank(input)) {
+			cout << "Input cannot be empty." << endl;
+		}
+		else if (!isAlphabeticName(input)) {
+			cout << "Invalid name! Name can only contain letters and spaces." << endl;
+		}
+	} while (isBlank(input) || !isAlphabeticName(input));
+	return input;
+}
+
 // In upper case to check gender
 bool isValidGender(const string& gender) {
 	string upper = toUpperText(gender);
@@ -448,7 +489,6 @@ void updateMembershipTier(Membership& membership) { // update the membership lev
 }
 
 void displayCustomerDetails(const Customer& customer) {
-	cout << endl;
 	print_header("Customer Details");
 	cout << " Customer ID    : " << customer.customerID << endl;
 	cout << " Name           : " << customer.name << endl;
@@ -490,7 +530,7 @@ void registerCustomer(vector<Customer>& customers) {
 
 	print_divider_with_space(false);
 
-	customer.name = getNonEmptyInput("Enter Customer Name [0 to back]: ");
+	customer.name = getValidName("Enter Customer Name [0 to back]: ");
 	if (toUpperText(customer.name) == "0") {
 		clear_screen();
 		return;
