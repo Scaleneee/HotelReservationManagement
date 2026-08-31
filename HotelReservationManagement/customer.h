@@ -787,7 +787,7 @@ void viewBookingHistory(const string& customerName, const vector<Reservation>& r
 		<< setw(15) << left << "Status"
 		<< setw(12) << left << "Amount" << endl;
 
-	print_divider();
+	cout << "----------------------------------------------------------------------------------------" << endl;
 
 	for (Reservation reservation : reservations) {
 		if (toUpperText(reservation.customerID) == toUpperText(customerID)) {
